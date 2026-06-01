@@ -14,8 +14,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY src/ ./src/
 COPY gmail_credentials.json .
-COPY sheets_credentials.json .
-COPY processed_emails.json .
 COPY .env .
 
 # We will use a script to run both the API and the worker

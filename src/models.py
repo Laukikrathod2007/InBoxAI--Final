@@ -1,26 +1,53 @@
 from pydantic import BaseModel
-from typing import Dict, Any, List, Optional
+from typing import List, Dict, Any, Optional
+from datetime import datetime
 
-class ExtractedData(BaseModel):
-    name: Optional[str] = "Unknown"
-    date: Optional[str] = "Unknown"
-    document_type: Optional[str] = "Other"
-    important_fields: Dict[str, Any] = {}
-    confidence_score: Optional[float] = 1.0
+class EmailAnalysis(BaseModel):
+    summary: str
+    category: str  # MEETING_REQUEST, TASK_ASSIGNED, etc.
+    confidence: float
+    priority: str
+    score: int
+    decision: str
+    reasoning: str
+    actions_required: List[str]
+    deadlines: List[str]
+    people: List[str]
+    organizations: List[str]
+    reply_needed: bool
+    draft_reply: Optional[str] = None
 
-class EmailMetadata(BaseModel):
-    id: str
-    sender: str
-    subject: str
-    date: str
-    snippet: str
+class DocumentExtraction(BaseModel):
+    """Model for intelligent document extraction results"""
+    document_type: str  # invoice, resume, form, receipt, contract
+    extracted_data: Dict[str, Any]
+    confidence: float
+    raw_text_length: int
+    extraction_timestamp: str
+    filename: str
+    error: Optional[str] = None
+
+class AttachmentInfo(BaseModel):
+    """Model for email attachment metadata"""
+    filename: str
+    size: int
+    mime_type: str
+    attachment_id: str
 
 class WorkflowState(BaseModel):
     email_id: str
+    thread_id: str
     sender: str
     subject: str
-    pdf_text: Optional[str] = None
-    extracted_data: Optional[ExtractedData] = None
-    sheet_row_index: Optional[int] = None
-    draft_reply_id: Optional[str] = None
-    error: Optional[str] = None
+    raw_content: str
+    cleaned_content: Optional[str] = None
+    thread_history: str
+    analysis: Optional[EmailAnalysis] = None
+    attachments: List[AttachmentInfo] = []
+    document_extractions: List[DocumentExtraction] = []
+    confidence_score: float = 0.0
+    needs_human_review: bool = False
+    confidence_level: str = "unknown"
+    is_noise: bool = False
+    latency: float = 0.0
+    finished: bool = False

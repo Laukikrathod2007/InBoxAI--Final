@@ -1,22 +1,162 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
 @import "tailwindcss";
 
 :root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+  /* InBoxIQ Modern Light Mode Theme */
+  --bg: #f8fafc;
+  --surface: #f8fafc;
+  --surface-low: #f1f5f9;
+  --surface-lowest: #ffffff;
+  --surface-high: #e2e8f0;
+  --on-surface: #1e293b;
+  --on-surface-variant: #64748b;
+  --primary: #3b82f6;
+  --primary-dim: #1e40af;
+  --accent: #6366f1;
+  --border-ghost: rgba(203, 213, 225, 0.3);
+  --glass: rgba(255, 255, 255, 0.9);
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #0c0e14;
+  font-family: 'Inter', sans-serif;
+  letter-spacing: -0.01em;
+  -webkit-font-smoothing: antialiased;
+}
 
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
+* {
+  @apply antialiased;
+}
+
+html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 body {
-  margin: 0;
-  min-width: 320px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  color: #1e293b;
   min-height: 100vh;
 }
+
+.light {
+  /* Modern High-Precision Light Mode */
+  --bg: #f8fafc;
+  --surface: #f8fafc;
+  --surface-low: #f1f5f9;
+  --surface-lowest: #ffffff;
+  --surface-high: #e2e8f0;
+  --on-surface: #1e293b;
+  --on-surface-variant: #64748b;
+  --primary: #3b82f6;
+  --primary-dim: #1e40af;
+  --accent: #6366f1;
+  --border-ghost: rgba(203, 213, 225, 0.4);
+  --glass: rgba(255, 255, 255, 0.95);
+}
+
+* { box-sizing: border-box; }
+
+html, body, #root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background: linear-gradient(135deg, var(--bg) 0%, var(--surface-low) 100%);
+  color: var(--on-surface);
+  overflow: auto;
+  transition: background-color 0.3s cubic-bezier(0.16, 1, 0.3, 1), color 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ── Typography Scale (Modern) ────────────────────────────────────── */
+.display-lg { font-size: 2.25rem; font-weight: 700; letter-spacing: -0.03em; line-height: 1; }
+.headline-sm { font-size: 1.25rem; font-weight: 600; letter-spacing: -0.02em; }
+.title-md { font-size: 0.9375rem; font-weight: 500; }
+.body-md { font-size: 0.8125rem; font-weight: 400; line-height: 1.5; }
+.label-md { font-size: 0.6875rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; }
+
+/* ── UI Elements (Modern Glass Style) ─────────────────────────────────────────── */
+.glass-panel {
+  background: var(--glass);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--border-ghost);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.hairline {
+  border: 0.5px solid var(--border-ghost);
+}
+
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  font-size: 1.25rem;
+}
+
+/* ── Custom Scrollbar (Modern) ─────────────────────────────────────────── */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--surface-high) transparent;
+}
+.custom-scrollbar::-webkit-scrollbar { width: 6px; }
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--primary) 0%, var(--accent) 100%);
+  border-radius: 10px;
+  transition: background 0.3s ease;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, var(--primary-dim) 0%, var(--primary) 100%);
+}
+
+/* ── Animations (Smooth) ───────────────────────────────────── */
+.animate-in {
+  animation: slideAndFade 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes slideAndFade {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+button {
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+button:active {
+  transform: scale(0.98);
+}
+
+/* ── Gradient Backgrounds ───────────────────────────────────── */
+.gradient-primary {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+}
+
+.gradient-surface {
+  background: linear-gradient(135deg, var(--surface-lowest) 0%, var(--surface-low) 100%);
+}
+
+.gradient-accent {
+  background: linear-gradient(135deg, var(--accent) 0%, var(--primary) 100%);
+}
+
+/* ── Animations (Micro-interactions) ───────────────────────────────────── */
+.animate-in {
+  animation: slideAndFade 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes slideAndFade {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+button {
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+button:active { transform: scale(0.98); }
