@@ -31,6 +31,7 @@ export default function App() {
   const [emailGroups, setEmailGroups] = useState({});
   const [historyEmails, setHistoryEmails] = useState([]);
   const [auditLog, setAuditLog] = useState([]);
+  const [autopilotMode, setAutopilotMode] = useState('assist');
   const [searchResults, setSearchResults] = useState([]);
   const [automationStatus, setAutomationStatus] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -124,17 +125,17 @@ export default function App() {
         axios.get(`${API_BASE}/user-profile`),
         axios.get(`${API_BASE}/emails-by-category`),
         axios.get(`${API_BASE}/history`),
-        axios.get(`${API_BASE}/stats`),
         axios.get('/automation/status'),
-        axios.get(`${API_BASE}/threads`),
         axios.get(`${API_BASE}/document-extractions`),
         axios.get(`${API_BASE}/extraction-stats`),
         axios.get(`${API_BASE}/review-queue`),
         axios.get(`${API_BASE}/settings`),
       ]);
 
-      const historyList = historyRes.data || [];
-      const extractionsList = extractionsRes.data || [];
+      // Guard every list: one malformed response must not blank the whole app.
+      const asList = (d) => (Array.isArray(d) ? d : []);
+      const historyList = asList(historyRes.data);
+      const extractionsList = asList(extractionsRes.data);
 
       setUserProfile(profileRes.data);
       setEmailGroups(categoriesRes.data);
@@ -145,7 +146,8 @@ export default function App() {
       setAutomationStatus(automationRes.data);
       setDocumentExtractions(extractionsList);
       setExtractionStats(extractionStatsRes.data);
-      setReviewQueue(reviewQueueRes.data || []);
+      setReviewQueue(asList(reviewQueueRes.data));
+      if (settingsRes.data?.autopilot_mode) setAutopilotMode(settingsRes.data.autopilot_mode);
       if (settingsRes.data && settingsRes.data.confidence_threshold) {
         setSliderThreshold(settingsRes.data.confidence_threshold);
       }
@@ -399,7 +401,7 @@ export default function App() {
   };
 
   return (
-    <div className="light min-h-screen w-full bg-gradient-to-br from-slate-50 to-slate-100 text-slate-900 antialiased font-sans">
+    <div className="min-h-screen w-full bg-slate-50 text-slate-900 antialiased">
       <Toaster position="top-center" richColors theme="light" />
 
       <SideBar
@@ -412,26 +414,17 @@ export default function App() {
         counts={sidebarCounts}
       />
 
-      <TopBar
-        userProfile={userProfile}
-        onRefresh={refreshDashboard}
-        onSearch={handleSearch}
-        activeSection={selectedView}
-        onNavigate={handleNavigate}
-      />
+      <TopBar onRefresh={refreshDashboard} onSearch={handleSearch} activeSection={selectedView} mode={autopilotMode} onAsk={() => setAskOpen(true)} />
 
-      <main className="ml-72 mt-20 p-8 h-[calc(100vh-80px)] overflow-y-auto custom-scrollbar">
-        <div className="max-w-5xl mx-auto flex flex-col gap-8">
+      <main className="ml-64 pt-16 min-h-screen">
+        <div className="mx-auto flex max-w-5xl flex-col gap-6 px-8 py-8">
           
           {/* VIEW: ActionRequired */}
           {selectedView === 'ActionRequired' && (
             <div className="flex flex-col gap-8">
-              <div className="rounded-3xl bg-white border border-slate-200/80 shadow-sm p-8">
-                <p className="text-xs uppercase tracking-[0.25em] font-semibold text-primary mb-2">Priority Operations</p>
-                <h2 className="text-4xl font-black text-slate-900 tracking-tight">Action Board</h2>
-                <p className="mt-2 text-sm text-slate-500 max-w-2xl">
-                  AI-sorted high-priority action items. Messages here require prompt response, approvals, or scheduled events.
-                </p>
+              <div className="pb-1">
+                <h2 className="text-2xl font-semibold tracking-tight text-slate-900">Needs you</h2>
+                <p className="mt-1 text-sm text-slate-500">Mail that needs a reply, a decision or a task. Unsure items wait in review first.</p>
               </div>
 
               {/* Human-in-the-Loop Review Queue */}
@@ -506,11 +499,8 @@ export default function App() {
               )}
 
               {/* Primary Action Emails */}
-              <div className="rounded-3xl bg-white p-6 border border-slate-200/80 shadow-sm">
-                <h3 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
-                  <span className="material-symbols-outlined text-primary">mail</span>
-                  Primary Actions Queue
-                </h3>
+              <div className="rounded-2xl bg-white border border-slate-200 overflow-hidden">
+                <h3 className="border-b border-slate-100 px-5 py-3 text-sm font-semibold text-slate-900">Inbox</h3>
                 <EmailList
                   emails={searchResults}
                   isLoading={loading}
@@ -524,15 +514,12 @@ export default function App() {
           {/* VIEW: WaitingFYI */}
           {selectedView === 'WaitingFYI' && (
             <div className="flex flex-col gap-8">
-              <div className="rounded-3xl bg-white border border-slate-200/80 shadow-sm p-8 animate-in">
-                <p className="text-xs uppercase tracking-[0.25em] font-semibold text-slate-400 mb-2">Informational Signal</p>
-                <h2 className="text-4xl font-black text-slate-900 tracking-tight">Waiting / FYI</h2>
-                <p className="mt-2 text-sm text-slate-500 max-w-2xl">
-                  Informational updates, low-priority reference documents, newsletters, and general system updates. No action required.
-                </p>
+              <div className="pb-1">
+                <h2 className="text-2xl font-semibold tracking-tight text-slate-900">FYI</h2>
+                <p className="mt-1 text-sm text-slate-500">Updates worth knowing about. Nothing to do here.</p>
               </div>
 
-              <div className="rounded-3xl bg-white p-6 border border-slate-200/80 shadow-sm">
+              <div className="rounded-2xl bg-white border border-slate-200 overflow-hidden">
                 <EmailList
                   emails={searchResults}
                   isLoading={loading}
@@ -546,31 +533,28 @@ export default function App() {
           {/* VIEW: Documents */}
           {selectedView === 'Documents' && (
             <div className="flex flex-col gap-8 animate-in">
-              <div className="rounded-3xl bg-white border border-slate-200/80 shadow-sm p-8">
-                <p className="text-xs uppercase tracking-[0.25em] font-semibold text-primary mb-2">Document Intelligence</p>
-                <h2 className="text-4xl font-black text-slate-900 tracking-tight">PDF Extract Registry</h2>
-                <p className="mt-2 text-sm text-slate-500 max-w-2xl">
-                  Structured intelligence extracted automatically from invoices, resumes, and PDF attachments.
-                </p>
+              <div className="pb-1">
+                <h2 className="text-2xl font-semibold tracking-tight text-slate-900">Documents</h2>
+                <p className="mt-1 text-sm text-slate-500">Details pulled from PDF attachments such as invoices and resumes.</p>
               </div>
 
               {/* Extraction Summary */}
               <div className="grid grid-cols-3 gap-6">
-                <div className="rounded-3xl bg-white p-6 border border-slate-200 shadow-sm flex flex-col justify-between">
+                <div className="rounded-2xl bg-white border border-slate-200 overflow-hidden flex flex-col justify-between">
                   <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">Total Extracted Documents</p>
                   <div className="mt-4 flex items-baseline justify-between">
                     <p className="text-4xl font-extrabold text-primary">{extractionStats?.total_extractions ?? 0}</p>
                     <span className="material-symbols-outlined text-slate-300 text-3xl">cloud_done</span>
                   </div>
                 </div>
-                <div className="rounded-3xl bg-white p-6 border border-slate-200 shadow-sm flex flex-col justify-between">
+                <div className="rounded-2xl bg-white border border-slate-200 overflow-hidden flex flex-col justify-between">
                   <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">AI Extraction Success</p>
                   <div className="mt-4 flex items-baseline justify-between">
                     <p className="text-4xl font-extrabold text-emerald-600">{extractionStats?.success_rate ?? 0}%</p>
                     <span className="material-symbols-outlined text-emerald-200 text-3xl">task_alt</span>
                   </div>
                 </div>
-                <div className="rounded-3xl bg-white p-6 border border-slate-200 shadow-sm flex flex-col justify-between">
+                <div className="rounded-2xl bg-white border border-slate-200 overflow-hidden flex flex-col justify-between">
                   <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">Pending Review</p>
                   <div className="mt-4 flex items-baseline justify-between">
                     <p className="text-4xl font-extrabold text-rose-600">{reviewQueue.length}</p>
@@ -642,12 +626,9 @@ export default function App() {
           {/* VIEW: NoiseAutomated */}
           {selectedView === 'NoiseAutomated' && (
             <div className="flex flex-col gap-8 animate-in">
-              <div className="rounded-3xl bg-white border border-slate-200/80 shadow-sm p-8">
-                <p className="text-xs uppercase tracking-[0.25em] font-semibold text-amber-500 mb-2">Automated Isolation</p>
-                <h2 className="text-4xl font-black text-slate-900 tracking-tight">Noise & Automated</h2>
-                <p className="mt-2 text-sm text-slate-500 max-w-2xl">
-                  AI pre-bucketing of promotional emails, marketing campaigns, newsletters, and high-volume noise.
-                </p>
+              <div className="pb-1">
+                <h2 className="text-2xl font-semibold tracking-tight text-slate-900">Hidden</h2>
+                <p className="mt-1 text-sm text-slate-500">Newsletters, promotions and automated mail kept out of your way.</p>
               </div>
 
               {/* Quick Signal Categories */}
@@ -672,8 +653,8 @@ export default function App() {
               </div>
 
               {/* Noise Email List */}
-              <div className="rounded-3xl bg-white p-6 border border-slate-200 shadow-sm">
-                <h3 className="text-xl font-bold text-slate-900 mb-4">Isolated Feed</h3>
+              <div className="rounded-2xl bg-white border border-slate-200 overflow-hidden">
+                <h3 className="border-b border-slate-100 px-5 py-3 text-sm font-semibold text-slate-900">Hidden mail</h3>
                 <EmailList
                   emails={searchResults}
                   isLoading={loading}
@@ -687,15 +668,12 @@ export default function App() {
           {/* VIEW: Archive */}
           {selectedView === 'Archive' && (
             <div className="flex flex-col gap-8 animate-in">
-              <div className="rounded-3xl bg-white border border-slate-200/80 shadow-sm p-8">
-                <p className="text-xs uppercase tracking-[0.25em] font-semibold text-slate-400 mb-2">Historical Records</p>
-                <h2 className="text-4xl font-black text-slate-900 tracking-tight">Archive Feed</h2>
-                <p className="mt-2 text-sm text-slate-500 max-w-2xl">
-                  Completed operations, historically resolved inbox signals, and snoozed actions.
-                </p>
+              <div className="pb-1">
+                <h2 className="text-2xl font-semibold tracking-tight text-slate-900">Archive & activity</h2>
+                <p className="mt-1 text-sm text-slate-500">Mail you finished, plus everything autopilot did or would have done.</p>
               </div>
 
-              <div className="rounded-3xl bg-white p-6 border border-slate-200 shadow-sm">
+              <div className="rounded-2xl bg-white border border-slate-200 overflow-hidden">
                 <h3 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
                   <span className="material-symbols-outlined text-slate-400">archive</span>
                   Archive Registry
@@ -712,7 +690,7 @@ export default function App() {
 
           {/* Autopilot activity with undo (shown under Archive) */}
           {selectedView === 'Archive' && (
-            <section aria-labelledby="audit-title" className="rounded-3xl bg-white p-6 border border-slate-200 shadow-sm">
+            <section aria-labelledby="audit-title" className="rounded-2xl bg-white border border-slate-200 overflow-hidden">
               <h3 id="audit-title" className="text-xl font-bold text-slate-900 mb-1">Autopilot activity</h3>
               <p className="text-xs text-slate-500 mb-4">
                 DRY RUN = what assist mode would do (Gmail unchanged). DONE = changed in Gmail.
@@ -752,12 +730,9 @@ export default function App() {
           {/* VIEW: Rules */}
           {selectedView === 'Rules' && (
             <div className="flex flex-col gap-8 animate-in">
-              <div className="rounded-3xl bg-white border border-slate-200/80 shadow-sm p-8">
-                <p className="text-xs uppercase tracking-[0.25em] font-semibold text-primary mb-2">Automated Sorting</p>
-                <h2 className="text-4xl font-black text-slate-900 tracking-tight">Routing Rules</h2>
-                <p className="mt-2 text-sm text-slate-500 max-w-2xl">
-                  Configure deterministic header intelligence, sender grouping patterns, and automated sorting filters.
-                </p>
+              <div className="pb-1">
+                <h2 className="text-2xl font-semibold tracking-tight text-slate-900">Rules</h2>
+                <p className="mt-1 text-sm text-slate-500">Sender patterns that group bulk mail. Use them to archive or mute a whole group.</p>
               </div>
 
               <div className="grid gap-6 md:grid-cols-2">
@@ -1172,12 +1147,9 @@ export default function App() {
           {/* VIEW: Settings */}
           {selectedView === 'Settings' && (
             <div className="flex flex-col gap-8 animate-in">
-              <div className="rounded-3xl bg-white border border-slate-200/80 shadow-sm p-8">
-                <p className="text-xs uppercase tracking-[0.25em] font-semibold text-slate-400 mb-2">Workspace Governance</p>
-                <h2 className="text-4xl font-black text-slate-900 tracking-tight">Settings & Autopilot</h2>
-                <p className="mt-2 text-sm text-slate-500 max-w-2xl">
-                  Adjust Connected Gmail, Worker automation, and set LLM risk control thresholds.
-                </p>
+              <div className="pb-1">
+                <h2 className="text-2xl font-semibold tracking-tight text-slate-900">Settings</h2>
+                <p className="mt-1 text-sm text-slate-500">Confidence threshold and automation controls.</p>
               </div>
 
               <div className="grid gap-6 md:grid-cols-2">
@@ -1272,15 +1244,12 @@ export default function App() {
           {/* VIEW: Search results */}
           {selectedView === 'Search' && (
             <div className="flex flex-col gap-8 animate-in">
-              <div className="rounded-3xl bg-white border border-slate-200/80 shadow-sm p-8">
-                <p className="text-xs uppercase tracking-[0.25em] font-semibold text-slate-400 mb-2">Search Registry</p>
-                <h2 className="text-4xl font-black text-slate-900 tracking-tight">Search Results</h2>
-                <p className="mt-2 text-sm text-slate-500 max-w-2xl">
-                  Displaying results matching: "{searchQuery}"
-                </p>
+              <div className="pb-1">
+                <h2 className="text-2xl font-semibold tracking-tight text-slate-900">Search</h2>
+                <p className="mt-1 text-sm text-slate-500">Mail matching &ldquo;{searchQuery}&rdquo;.</p>
               </div>
 
-              <div className="rounded-3xl bg-white p-6 border border-slate-200 shadow-sm">
+              <div className="rounded-2xl bg-white border border-slate-200 overflow-hidden">
                 <EmailList
                   emails={searchResults}
                   isLoading={loading}

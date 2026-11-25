@@ -100,6 +100,10 @@ What this shows: the original app hid 2 of every 3 emails that needed action. Ru
 The synthetic set is a regression guard. Its labels are mine and I wrote it alongside the rules, so it over-states accuracy: v2 scored 0% false-archive here and 30% on real mail.
 **Latency** (measured from the 264 processed emails in my own database, `latency` column, Nov 2026): p50 **8 ms**, p95 **44 s** overall. Rule-filtered mail finishes in milliseconds; the 84 emails that went to the LLM had p50 **22.5 s**, p95 **90 s** on a laptop CPU. All 266 decisions were logged under the Gemini model name, so I cannot say which model served each one. **Cost:** \ with local Ollama; Gemini cost was not tracked. Live numbers: `GET /api/metrics`.
 
+## Try it without Gmail
+
+`python scripts/demo_server.py` then open http://127.0.0.1:8002. It loads 80 synthetic emails into a temp folder, never polls Gmail and never calls a model. The landing page is at `/` and the dashboard at `/#/app`.
+
 ## Known limits
 - Login is a local token (`.inboxiq_token`), handed to the UI only on this machine. Fine for one user on one PC; not a multi-user login.
 - Undo exists for archives done by autopilot (`POST /api/autopilot/undo/{id}`). There is no undo button in the UI yet.

@@ -1,90 +1,72 @@
-﻿import React, { useState } from 'react';
+﻿import { useEffect, useRef, useState } from 'react';
+import { RefreshCw, Search, Sparkles } from 'lucide-react';
 
-export default function TopBar({ userProfile, onRefresh, onSearch, activeSection, onNavigate }) {
-  const [searchQuery, setSearchQuery] = useState('');
+const TITLES = {
+  ActionRequired: 'Needs you', WaitingFYI: 'FYI', NoiseAutomated: 'Hidden', Documents: 'Documents',
+  Archive: 'Archive & activity', AIBriefing: 'Daily briefing', Rules: 'Rules', Settings: 'Settings', Search: 'Search',
+};
 
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    onSearch(searchQuery.trim());
-  };
+export default function TopBar({ onRefresh, onSearch, activeSection, mode, onAsk }) {
+  const [query, setQuery] = useState('');
+  const inputRef = useRef(null);
 
-  const sections = [
-    { id: 'Inbox', label: 'Focus', icon: 'center_focus_strong' },
-    { id: 'Archive', label: 'Archive', icon: 'archive' },
-    { id: 'Rules', label: 'Rules', icon: 'shield' },
-  ];
+  // Ctrl/Cmd + K focuses search.
+  useEffect(() => {
+    const onKey = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        inputRef.current?.focus();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
+  const assist = (mode || 'assist') !== 'autonomous';
 
   return (
-    <header className="fixed top-0 left-72 right-0 h-20 bg-white flex items-center justify-between px-8 z-40 border-b border-slate-200 shadow-sm select-none">
-      <div className="flex items-center gap-8">
-        
-        {/* 1. Pill-shaped Search Box with Distinct Border (Image 5 standard) */}
-        <form onSubmit={handleSubmit} className="relative flex items-center">
-          <span className="absolute left-4 material-symbols-outlined text-slate-400 text-[18px]">search</span>
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search signals..."
-            className="w-[320px] rounded-full border border-slate-800 bg-white pl-11 pr-14 py-2 text-[13px] text-slate-800 placeholder-slate-400 outline-none transition-all focus:ring-4 focus:ring-slate-100 font-sans shadow-sm"
-          />
-          <span className="absolute right-3.5 px-2 py-0.5 rounded border border-slate-200 bg-white text-[10px] font-bold text-slate-400 tracking-wide font-sans shadow-sm pointer-events-none">
-            ⌘ K
-          </span>
-        </form>
+    <header className="fixed left-64 right-0 top-0 z-40 flex h-16 items-center gap-4 border-b border-slate-200 bg-white/85 px-6 backdrop-blur">
+      <h1 className="text-[15px] font-semibold text-slate-900">{TITLES[activeSection] || 'Inbox'}</h1>
+      <span
+        className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${assist ? 'bg-indigo-50 text-indigo-700' : 'bg-rose-50 text-rose-700'}`}
+        title={assist ? 'Gmail is not changed. Actions are logged as a dry run.' : 'Autopilot changes Gmail. Every action can be undone.'}
+      >
+        {assist ? 'Assist mode · Gmail unchanged' : 'Autonomous · changes Gmail'}
+      </span>
 
-        {/* 2. Top Navigation Tabs (Pill Buttons) */}
-        <nav className="hidden md:flex items-center gap-2">
-          {sections.map((section) => {
-            const isActive = activeSection === section.id || (section.id === 'Inbox' && activeSection === 'ActionRequired');
-            return (
-              <button
-                key={section.id}
-                onClick={() => onNavigate(section.id)}
-                className={`rounded-full px-5 py-2 text-[13px] font-bold flex items-center gap-1.5 transition-all border ${
-                  isActive
-                    ? 'bg-slate-100 border-slate-300 text-slate-900 shadow-sm'
-                    : 'bg-white border-slate-200 text-slate-500 hover:text-slate-700 hover:bg-slate-50'
-                }`}
-              >
-                <span className="material-symbols-outlined text-[16px]">{section.icon}</span>
-                {section.label}
-              </button>
-            );
-          })}
-        </nav>
-      </div>
+      <form
+        role="search"
+        onSubmit={(e) => { e.preventDefault(); onSearch(query.trim()); }}
+        className="relative ml-auto w-full max-w-sm"
+      >
+        <label htmlFor="global-search" className="sr-only">Search mail</label>
+        <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" aria-hidden="true" />
+        <input
+          id="global-search"
+          ref={inputRef}
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search mail"
+          className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pl-9 pr-14 text-[13px] outline-none transition focus:border-violet-400 focus:bg-white focus:ring-4 focus:ring-violet-100"
+        />
+        <kbd className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 rounded border border-slate-200 bg-white px-1.5 text-[10px] font-medium text-slate-400">Ctrl K</kbd>
+      </form>
 
-      {/* 3. Right side toolbar actions */}
-      <div className="flex items-center gap-3">
-        
-        {/* Refresh button (Circle layout) */}
-        <button
-          onClick={onRefresh}
-          className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm hover:bg-slate-50 active:scale-95 transition-all"
-          title="Refresh dashboard"
-        >
-          <span className="material-symbols-outlined text-[18px]">refresh</span>
-        </button>
-
-        {/* AI SORT (White Pill with Border) */}
-        <button
-          onClick={() => onNavigate('Inbox')}
-          className="rounded-full bg-white text-slate-700 border border-slate-200 px-5 py-2 text-[12px] font-extrabold hover:bg-slate-50 transition flex items-center gap-1.5 shadow-sm active:scale-95"
-        >
-          <span className="material-symbols-outlined text-[14px] text-blue-500">auto_awesome</span>
-          AI SORT
-        </button>
-
-        {/* User profile dropdown badge */}
-        <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-full p-1 pr-2 shadow-sm cursor-pointer hover:bg-slate-50 transition">
-          <div className="h-8 w-8 rounded-full bg-slate-500 text-white font-extrabold text-xs flex items-center justify-center uppercase shadow-inner">
-            {userProfile?.name ? userProfile.name.substring(0, 2) : '?'}
-          </div>
-          <span className="material-symbols-outlined text-slate-400 text-[14px] ml-0.5">keyboard_arrow_down</span>
-        </div>
-
-      </div>
+      <button
+        type="button"
+        onClick={onAsk}
+        className="flex items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-2 text-[13px] font-semibold text-white hover:bg-slate-700"
+      >
+        <Sparkles size={14} aria-hidden="true" /> Ask
+      </button>
+      <button
+        type="button"
+        onClick={onRefresh}
+        aria-label="Refresh"
+        className="grid h-9 w-9 place-items-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50"
+      >
+        <RefreshCw size={15} aria-hidden="true" />
+      </button>
     </header>
   );
 }
