@@ -1,3 +1,4 @@
+import os
 import threading
 import uvicorn
 import time
@@ -19,8 +20,9 @@ def get_local_ip():
 
 def run_server():
     print("Starting InBoxIQ Dashboard Server...")
-    # host="0.0.0.0" makes the server accessible across the local network
-    uvicorn.run(app, host="0.0.0.0", port=8001, log_level="error")
+    # Localhost only by default. Set INBOXIQ_HOST=0.0.0.0 to expose on the LAN
+    # (the API has no login, so only do that on a network you trust).
+    uvicorn.run(app, host=os.getenv("INBOXIQ_HOST", "127.0.0.1"), port=8001, log_level="error")
 
 if __name__ == "__main__":
     local_ip = get_local_ip()

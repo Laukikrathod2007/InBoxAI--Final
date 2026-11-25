@@ -13,17 +13,12 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
 COPY src/ ./src/
-COPY gmail_credentials.json .
-COPY .env .
+# Secrets are NOT baked into the image. Mount them at run time:
+#   docker run --env-file .env -v ./gmail_credentials.json:/app/gmail_credentials.json \
+#     -v ./token.json:/app/token.json -p 127.0.0.1:8001:8001 inboxiq
+# The API app starts the worker itself (src/main.py startup), so run one process.
+# Note: first-time Gmail OAuth needs a browser; create token.json on the host first.
 
-# We will use a script to run both the API and the worker
-RUN echo '#!/bin/bash\n\
-uvicorn src.main:app --host 0.0.0.0 --port 8000 & \n\
-python -m src.worker\n\
-wait' > /app/start.sh
+EXPOSE 8001
 
-RUN chmod +x /app/start.sh
-
-EXPOSE 8000
-
-CMD ["/app/start.sh"]
+CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8001"]

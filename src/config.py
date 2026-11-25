@@ -19,7 +19,8 @@ class Settings(BaseSettings):
     # Autopilot (production automation controls)
     AUTOPILOT_ENABLED: bool = True
     # off | assist | autonomous
-    AUTOPILOT_MODE: str = "autonomous"
+    # Default is "assist": it never archives or modifies real Gmail mail.
+    AUTOPILOT_MODE: str = "assist"
     # Safe defaults: never auto-send unless explicitly enabled.
     AUTOPILOT_AUTO_ARCHIVE_NOISE: bool = True
     AUTOPILOT_MARK_READ_ON_ARCHIVE: bool = True

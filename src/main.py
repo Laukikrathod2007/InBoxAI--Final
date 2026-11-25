@@ -4,6 +4,7 @@ from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 import logging
 import os
+from pathlib import Path
 from .worker import Worker
 from .api_routes import router as api_router
 
@@ -12,11 +13,41 @@ app = FastAPI(title="InBoxIQ API", version="1.0")
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins (for development)
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    # Only the app's own origins. Extra origins can be added via CORS_ORIGINS.
+    allow_origins=[
+        "http://localhost:8001", "http://127.0.0.1:8001",
+        "http://localhost:5173", "http://127.0.0.1:5173",
+    ] + [o for o in os.getenv("CORS_ORIGINS", "").split(",") if o.strip()],
+    allow_credentials=False,
+    allow_methods=["GET", "POST"],
+    allow_headers=["Content-Type"],
 )
+
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import JSONResponse
+
+ALLOWED_HOSTS = ["localhost", "127.0.0.1", "testserver"] + \
+    [h.strip() for h in os.getenv("ALLOWED_HOSTS", "").split(",") if h.strip()]
+ALLOWED_ORIGINS = {"http://localhost:8001", "http://127.0.0.1:8001",
+                   "http://localhost:5173", "http://127.0.0.1:5173"} | \
+    {o.strip() for o in os.getenv("CORS_ORIGINS", "").split(",") if o.strip()}
+
+
+class OriginGuard(BaseHTTPMiddleware):
+    """Block cross-site writes (CSRF). Not a login: it only stops other web pages
+    from driving the API through your browser. A real login is still on the roadmap."""
+    async def dispatch(self, request, call_next):
+        if request.method not in ("GET", "HEAD", "OPTIONS"):
+            origin = request.headers.get("origin")
+            if origin and origin not in ALLOWED_ORIGINS:
+                return JSONResponse({"detail": "Cross-origin request blocked"}, status_code=403)
+        return await call_next(request)
+
+
+app.add_middleware(OriginGuard)
+# Rejects DNS-rebinding: requests must use a known Host header.
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=ALLOWED_HOSTS)
 
 app.include_router(api_router)
 
@@ -96,8 +127,10 @@ if os.path.exists(frontend_path):
     @app.get("/{full_path:path}")
     async def serve_frontend(full_path: str):
         # Serve static file if it exists, otherwise fall back to SPA index.html.
-        file_path = os.path.join(frontend_path, full_path)
-        if os.path.isfile(file_path):
+        root = Path(frontend_path).resolve()
+        file_path = (root / full_path).resolve()
+        # Only serve files that stay inside the dist folder (blocks ../ traversal).
+        if file_path.is_relative_to(root) and file_path.is_file():
             return FileResponse(file_path)
         return FileResponse(os.path.join(frontend_path, "index.html"))
 else:

@@ -128,16 +128,25 @@ def search_emails(q: str = "", db: Session = Depends(get_db)):
 @router.post("/overrides")
 def post_override(req: OverrideRequest, db: Session = Depends(get_db)):
     """ Record manual user feedback for priority/noise/done status """
-    feedback = UserFeedback(
-        email_id=req.email_id,
-        override_priority=req.priority,
-        override_noise=req.is_noise,
-        override_done=req.is_done
-    )
-    db.add(feedback)
-    
-    # Update the record directly for immediate UI feedback
     email = db.query(EmailRecord).filter(EmailRecord.id == req.email_id).first()
+    if not email:
+        raise HTTPException(status_code=404, detail="Email not found")
+
+    # Record one feedback row per changed field (matches the UserFeedback columns).
+    changes = [
+        ("priority", email.priority, req.priority, False),
+        ("is_noise", email.status, req.is_noise, True),
+        ("is_done", email.is_done, req.is_done, False),
+    ]
+    for field, old, new, is_noise in changes:
+        if new is not None:
+            db.add(UserFeedback(
+                email_id=req.email_id, field=field,
+                original_value=str(old), new_value=str(new),
+                is_noise_override=bool(is_noise and new),
+            ))
+
+    # Update the record directly for immediate UI feedback
     if email:
         if req.priority: email.priority = req.priority
         if req.is_noise is not None: 
@@ -243,6 +252,16 @@ def get_stats(db: Session = Depends(get_db)):
         "needs_reply": needs_reply,
         "system_errors": errors
     }
+
+@router.get("/metrics")
+def get_metrics(db: Session = Depends(get_db)):
+    """Pipeline latency percentiles (ms) from stored per-email latency."""
+    vals = sorted(v for (v,) in db.query(EmailRecord.latency).filter(EmailRecord.latency.isnot(None)).all())
+    if not vals:
+        return {"count": 0, "p50_ms": None, "p95_ms": None}
+    pick = lambda q: vals[min(len(vals) - 1, int(q * len(vals)))]
+    return {"count": len(vals), "p50_ms": pick(0.50), "p95_ms": pick(0.95), "max_ms": vals[-1]}
+
 
 @router.get("/logs")
 def get_logs(limit: int = 50, db: Session = Depends(get_db)):
