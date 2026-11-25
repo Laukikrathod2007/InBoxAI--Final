@@ -38,3 +38,9 @@ Context: On 50 hand-labelled emails from my own inbox, rules v2 (tuned on the sy
 Options: (A) keep v2 and accept 30% false-archive, (B) add sender allowlists per person, (C) hide only on promo subjects and send the rest to the LLM/review.
 Decision: C. Hiding wanted mail costs much more than reading one extra promotion.
 Consequence: Noise hidden by rules fell to 17.6% on real mail (38.3% synthetic), at 0% false-archive on both. Lesson: a synthetic test set tuned alongside the rules gave 0% and was wrong on real data. Revisit with more labelled real mail and a per-sender allowlist learned from user overrides.
+
+## 2026-11-26: The LLM's low-importance guess no longer archives mail
+Context: On 50 labelled real emails, rules + Llama 3 hid 21.2% of important mail and lost 20% of needs-action mail. The cause was the rule "not requires_action and importance < 40 -> ARCHIVE".
+Options: (A) raise the threshold, (B) archive only on an explicit PROMOTION/SPAM/NEWSLETTER label, (C) stop LLM archiving entirely.
+Decision: B. Measured after the change: 0.0% false-hide, 0.0% needs-action lost, but noise caught fell from 47.1% to 17.6%.
+Consequence: More noise stays visible as low-priority FYI. Revisit with a better noise classifier, scored on the same labelled set.

@@ -270,9 +270,14 @@ class LangGraphBrain:
         else:
             # RULE 1: Auto Archive / Mute
             # For low-importance noise or marketing that does not require action
-            if category in ["PROMOTION", "SPAM"] or \
-               (not requires_action and importance_score < 40 and not has_thread_history):
+            # Only an explicit promotion/spam label hides mail. A "low importance"
+            # guess alone hid 1 in 5 needs-action emails in the real-mail eval
+            # (eval/real.py), so that mail now stays visible as low-priority FYI.
+            if category in ["PROMOTION", "SPAM", "NEWSLETTER"]:
                 decision = "ARCHIVE"
+                priority = "low"
+            elif not requires_action and importance_score < 40 and not has_thread_history:
+                decision = "FYI_KNOWLEDGE"
                 priority = "low"
 
             # RULE 2: Surface as Action Item

@@ -74,18 +74,30 @@ Gmail API (OAuth 2.0)
 
 ---
 
-## Results (synthetic mailbox, 150 labelled emails, seed 42)
+## Results
 
-Reproduce: `python -m eval.make_dataset` then `python -m eval.run_eval --name rules` (no network). LLM row: `python -m eval.run_eval --name llm --llm` (needs local Ollama; refuses cloud).
+### Real mail (my own inbox, 50 emails, labelled by hand)
+Labels: 17 noise, 18 FYI, 15 needs-action. The emails and labels stay on my machine (gitignored). Reproduce on your own mail: `python -m eval.real export`, add labels, `python -m eval.real score`.
 
-| System | Noise caught | Noise precision | Important mail wrongly hidden | Needs-action mail lost |
+| System | Noise hidden | Precision | Important mail wrongly hidden | Needs-action mail hidden |
 |---|---|---|---|---|
-| Archive nothing (baseline) | 0% | n/a | 0% | 0% |
-| Original keyword rules | 88.3% | 63.9% | 33.3% | 40.0% |
-| Rules v2 (this repo) | 88.3% | 100% | 0.0% | 0.0% |
-| Llama 3 8B local, archive-if-low-importance | 96.7% | 65.2% | 34.4% | 0.0% |
+| Hide nothing (baseline) | 0% | n/a | 0% | 0% |
+| App as it originally ran (old rules + LLM) | 52.9% | 32.1% | **57.6%** | **66.7%** |
+| Rules v2 (tuned on synthetic data) | 29.4% | 33.3% | 30.3% | 26.7% |
+| **Rules v3 (current)** | 17.6% | 100% | **0.0%** | **0.0%** |
 
-Reading this honestly: the data is synthetic and the labels are mine, so the rules score is partly tuned to the test set. Treat it as a regression guard, not as accuracy on real mail. The LLM row shows a plain "archive if not important" policy is unsafe, which is why `assist` is the default and the LLM never archives on its own.
+What this shows: the original app hid 2 of every 3 emails that needed action. Rules tuned on synthetic data still failed on real mail (30% false-archive), so I cut the rules to the one signal that was always right (promotional subjects). The rules now hide less noise; the rest is left for review instead of being hidden. 50 emails is a small sample: one wrong hide would be about 3 percentage points.
+
+### Synthetic mailbox (150 labelled emails, seed 42, runs in CI)
+`python -m eval.make_dataset`, then `python -m eval.run_eval --name rules`.
+
+| System | Noise hidden | Precision | Important mail wrongly hidden |
+|---|---|---|---|
+| Original keyword rules | 88.3% | 63.9% | 33.3% |
+| Rules v3 (current) | 38.3% | 100% | 0.0% |
+| Llama 3 8B local, archive-if-low-importance | 96.7% | 65.2% | 34.4% |
+
+The synthetic set is a regression guard. Its labels are mine and I wrote it alongside the rules, so it over-states accuracy: v2 scored 0% false-archive here and 30% on real mail.
 **Latency** (measured from the 264 processed emails in my own database, `latency` column, Nov 2026): p50 **8 ms**, p95 **44 s** overall. Rule-filtered mail finishes in milliseconds; the 84 emails that went to the LLM had p50 **22.5 s**, p95 **90 s** on a laptop CPU. All 266 decisions were logged under the Gemini model name, so I cannot say which model served each one. **Cost:** \ with local Ollama; Gemini cost was not tracked. Live numbers: `GET /api/metrics`.
 
 ## Known limits

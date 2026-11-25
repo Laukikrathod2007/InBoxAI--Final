@@ -30,3 +30,21 @@ def test_empty_analysis_routes_to_human_review():
     assert out["decision"] == "REVIEW"
     assert out["priority"] == "high"
     assert settings.CONFIDENCE_THRESHOLD > 0
+
+
+def test_low_importance_llm_guess_does_not_archive():
+    """Real-mail eval: the LLM's 'not important' guess hid needs-action mail."""
+    from src.brain import brain
+    state = {
+        "analysis": {"confidence": 90, "importance_score": 20, "requires_action": False},
+        "category": "INFORMATION_UPDATE", "sender": "boss@company.example",
+        "thread_history": "", "document_extractions": [],
+    }
+    assert brain._decision_engine_node(state)["decision"] != "ARCHIVE"
+
+
+def test_llm_flagged_promotion_still_archives():
+    from src.brain import brain
+    state = {"analysis": {"confidence": 95, "importance_score": 5}, "category": "PROMOTION",
+             "sender": "x@shop.example", "thread_history": "", "document_extractions": []}
+    assert brain._decision_engine_node(state)["decision"] == "ARCHIVE"
