@@ -14,10 +14,13 @@ def test_rules_never_archive_important_mail():
     assert s["hard_cases_archived_pct"] == 0.0, s
 
 
-def test_rules_catch_most_obvious_noise():
+def test_rules_still_catch_promo_noise():
+    # v3 hides only promo subjects (real-mail check showed sender keywords hid
+    # mail the user reads). Recall is deliberately low; the LLM handles the rest.
     rows = load()
     s = score(rows, [rules_predict(r) for r in rows])
-    assert s["noise_recall_pct"] >= 85.0, s
+    assert s["noise_recall_pct"] >= 35.0, s
+    assert s["noise_precision_pct"] == 100.0, s
 
 
 def test_security_probe_mail_is_not_archived():

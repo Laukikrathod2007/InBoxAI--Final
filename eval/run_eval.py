@@ -19,7 +19,7 @@ def load():
 
 
 def rules_predict(r):
-    from src.brain import quick_rule_filter
+    from src.rules import quick_rule_filter
     return quick_rule_filter(r["sender"], r["subject"], r["body"], [], "") is not None
 
 

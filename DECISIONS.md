@@ -32,3 +32,9 @@ Consequence: Not suitable for hosting or several users. Revisit with (B) if this
 Context: Autonomous archive had no undo, and the audit could say EXECUTED for a failed Gmail call.
 Decision: Write the audit row after the Gmail call with the real result; skip Gmail entirely if the DB write failed; add an undo route that restores INBOX and UNREAD.
 Consequence: Labels added by autopilot are not undone yet.
+
+## 2026-11-26: Rules v3, cut to what held up on real mail
+Context: On 50 hand-labelled emails from my own inbox, rules v2 (tuned on the synthetic set) hid 30.3% of important mail. The original app hid 57.6% of important mail and 66.7% of needs-action mail. Sender keywords (newsletter, digest, marketing, jobs-noreply) and "unsubscribe + noreply" caused every false hide; promo subjects ("% off") caused none.
+Options: (A) keep v2 and accept 30% false-archive, (B) add sender allowlists per person, (C) hide only on promo subjects and send the rest to the LLM/review.
+Decision: C. Hiding wanted mail costs much more than reading one extra promotion.
+Consequence: Noise hidden by rules fell to 17.6% on real mail (38.3% synthetic), at 0% false-archive on both. Lesson: a synthetic test set tuned alongside the rules gave 0% and was wrong on real data. Revisit with more labelled real mail and a per-sender allowlist learned from user overrides.
