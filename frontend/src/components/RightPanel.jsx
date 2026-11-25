@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function RightPanel({ selectedView, stats, automationStatus, extractionStats, reviewQueue, aiBriefing = '', onRunBriefing, onAskOpen, onToggleAutomation }) {
+export default function RightPanel({ selectedView, stats, automationStatus, extractionStats, reviewQueue, aiBriefing = '', onRunBriefing, onAskOpen }) {
   const recommendations = [
     {
       icon: 'mail_outline',

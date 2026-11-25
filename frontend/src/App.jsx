@@ -30,12 +30,9 @@ export default function App() {
   const [userProfile, setUserProfile] = useState(null);
   const [emailGroups, setEmailGroups] = useState({});
   const [historyEmails, setHistoryEmails] = useState([]);
-  const [threads, setThreads] = useState([]);
   const [searchResults, setSearchResults] = useState([]);
-  const [stats, setStats] = useState(null);
   const [automationStatus, setAutomationStatus] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [aiBriefing, setAiBriefing] = useState('');
   const [askOpen, setAskOpen] = useState(false);
   const [askResponse, setAskResponse] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -95,7 +92,7 @@ export default function App() {
       return emailsList.filter(item => 
         !item.is_done && 
         !item.is_noise && 
-        (!item.status || item.status === 'FYI_KNOWLEDGE' || item.status === 'processed')
+        (!item.status || ['FYI_KNOWLEDGE','processed','IGNORE','READ_LATER'].includes(item.status))
       );
     }
     if (view === 'NoiseAutomated') {
@@ -116,12 +113,13 @@ export default function App() {
 
   useEffect(() => {
     refreshDashboard();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedView]); // Refresh when view changes to recalculate filters
 
   const refreshDashboard = async () => {
     setLoading(true);
     try {
-      const [profileRes, categoriesRes, historyRes, statsRes, automationRes, threadsRes, extractionsRes, extractionStatsRes, reviewQueueRes, settingsRes] = await Promise.all([
+      const [profileRes, categoriesRes, historyRes, automationRes, extractionsRes, extractionStatsRes, reviewQueueRes, settingsRes] = await Promise.all([
         axios.get(`${API_BASE}/user-profile`),
         axios.get(`${API_BASE}/emails-by-category`),
         axios.get(`${API_BASE}/history`),
@@ -135,15 +133,12 @@ export default function App() {
       ]);
 
       const historyList = historyRes.data || [];
-      const threadList = threadsRes.data || [];
       const extractionsList = extractionsRes.data || [];
 
       setUserProfile(profileRes.data);
       setEmailGroups(categoriesRes.data);
       setHistoryEmails(historyList);
-      setStats(statsRes.data);
       setAutomationStatus(automationRes.data);
-      setThreads(threadList);
       setDocumentExtractions(extractionsList);
       setExtractionStats(extractionStatsRes.data);
       setReviewQueue(reviewQueueRes.data || []);
@@ -187,7 +182,8 @@ export default function App() {
     return pattern.test(sender) || pattern.test(subject);
   };
 
-  const handleNavigate = async (view) => {
+  const handleNavigate = async (inView) => {
+    const view = inView === 'Inbox' ? 'ActionRequired' : inView;
     setSelectedView(view);
     setSearchQuery('');
     setSearchResults(getFilteredEmails(view, historyEmails));
@@ -223,17 +219,6 @@ export default function App() {
     } catch (error) {
       console.error('Mute email failed:', error);
       toast.error('Unable to mute email.');
-    }
-  };
-
-  const handleRunBriefing = async () => {
-    try {
-      const res = await axios.get(`${API_BASE}/daily-briefing`);
-      setAiBriefing(res.data.briefing || 'No briefing available.');
-      toast.success('AI briefing generated.');
-    } catch (error) {
-      console.error('Briefing failed:', error);
-      toast.error('Failed to generate AI briefing.');
     }
   };
 
@@ -276,8 +261,6 @@ export default function App() {
     }
   };
 
-  const selectedEmails = searchResults;
-
   const emailGroupsArray = Object.entries(emailGroups).map(([name, data]) => {
     const style = CATEGORY_STYLE_MAP[data.color] || CATEGORY_STYLE_MAP.default;
 
@@ -317,19 +300,19 @@ export default function App() {
   const highPriorityCount = historyEmails.filter(item => 
     !item.is_done && 
     !item.is_noise && 
-    item.priority === 'HIGH'
+    (item.priority || '').toLowerCase() === 'high'
   ).length;
 
   const dueTodayCount = historyEmails.filter(item => 
     !item.is_done && 
     !item.is_noise && 
-    (item.priority === 'HIGH' || (item.deadlines && JSON.stringify(item.deadlines).toLowerCase().includes('today')))
+    ((item.priority || '').toLowerCase() === 'high' || (item.deadlines && JSON.stringify(item.deadlines).toLowerCase().includes('today')))
   ).length;
 
   const overdueCount = historyEmails.filter(item => 
     !item.is_done && 
     !item.is_noise && 
-    item.priority === 'HIGH' && 
+    (item.priority || '').toLowerCase() === 'high' && 
     ['REPLY', 'TASK'].includes(item.status)
   ).length;
 
@@ -465,7 +448,7 @@ export default function App() {
                           <div className="flex gap-2">
                             <button
                               onClick={() => {
-                                toast.success("Draft approved and sent!");
+                                toast.success("Marked as reviewed. Nothing was sent.");
                                 axios.post(`${API_BASE}/overrides`, { email_id: item.email_id, is_done: true });
                                 refreshDashboard();
                               }}
@@ -881,10 +864,7 @@ export default function App() {
                           <div 
                             key={item.id} 
                             onClick={() => {
-                              if (item.email) {
-                                setSelectedEmail(item.email);
-                                setSelectedView('ActionRequired');
-                              }
+                              setSelectedView('ActionRequired');
                             }}
                             className={`flex items-center justify-between gap-3 p-2 rounded-2xl transition ${item.email ? 'hover:bg-slate-50 cursor-pointer' : ''}`}
                           >
@@ -899,8 +879,8 @@ export default function App() {
                             </div>
 
                             <span className={`px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase shrink-0 ${
-                              item.priority === 'HIGH' ? 'bg-rose-50 text-rose-600' :
-                              item.priority === 'MEDIUM' ? 'bg-amber-50 text-amber-600' :
+                              (item.priority || '').toLowerCase() === 'high' ? 'bg-rose-50 text-rose-600' :
+                              (item.priority || '').toLowerCase() === 'medium' ? 'bg-amber-50 text-amber-600' :
                               'bg-emerald-50 text-emerald-600'
                             }`}>
                               {item.priority}
@@ -940,10 +920,7 @@ export default function App() {
                           <div 
                             key={item.id}
                             onClick={() => {
-                              if (item.email) {
-                                setSelectedEmail(item.email);
-                                setSelectedView('ActionRequired');
-                              }
+                              setSelectedView('ActionRequired');
                             }}
                             className={`flex items-center gap-4 p-1 rounded-2xl transition ${item.email ? 'hover:bg-slate-50 cursor-pointer' : ''}`}
                           >
@@ -1182,7 +1159,7 @@ export default function App() {
                         await axios.post(`${API_BASE}/settings`, { confidence_threshold: sliderThreshold });
                         toast.success(`Risk guardrails locked at ${sliderThreshold}% confidence routing threshold!`);
                         refreshDashboard();
-                      } catch (e) {
+                      } catch {
                         toast.error("Failed to save risk guardrails.");
                       }
                     }}

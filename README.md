@@ -1,10 +1,10 @@
-# InBoxIQ — AI-Native Work Operating System
+﻿# InBoxIQ — AI-Native Work Operating System
 
 <div align="center">
 
 ![Version](https://img.shields.io/badge/Version-v1.1.0-6366f1?style=for-the-badge)
 ![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)
-![React](https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=black)
+![React](https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=black)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.109-009688?style=for-the-badge&logo=fastapi&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 
@@ -29,7 +29,7 @@ InBoxIQ is a privacy-first AI Work OS built around Gmail. It automatically reads
 | **PDF Intelligence** | Automatically extracts invoices, resumes, contracts from attachments |
 | **Autopilot Mode** | Auto-archives noise, applies Gmail labels, marks emails read |
 | **Daily Briefing** | AI-generated executive summary of your pending work |
-| **Privacy First** | Runs fully local via Ollama (Llama 3) — no data leaves your machine |
+| **Local-first** | Runs on your machine with Ollama (Llama 3). Gemini is an optional fallback and only used if `GEMINI_API_KEY` is set; then email text can leave your machine. |
 | **Gemini Fallback** | Optional Google Gemini API as a cloud fallback |
 | **Noise Control** | Deterministic rule engine + LLM spam filter |
 
@@ -63,7 +63,7 @@ Gmail API (OAuth 2.0)
 
 | Layer | Technology |
 |---|---|
-| **Frontend** | React 18 + Vite + Tailwind CSS v4 + Lucide React |
+| **Frontend** | React 19 + Vite + Tailwind CSS v4 + Lucide React |
 | **Backend** | FastAPI + SQLAlchemy + SQLite |
 | **AI Orchestration** | LangGraph (stateful agent graph) |
 | **Local AI** | Ollama (Llama 3) — runs on your machine |
@@ -73,6 +73,26 @@ Gmail API (OAuth 2.0)
 
 ---
 
+## Results (synthetic mailbox, 150 labelled emails, seed 42)
+
+Reproduce: `python -m eval.make_dataset` then `python -m eval.run_eval --name rules` (no network). LLM row: `python -m eval.run_eval --name llm --llm` (needs local Ollama; refuses cloud).
+
+| System | Noise caught | Noise precision | Important mail wrongly hidden | Needs-action mail lost |
+|---|---|---|---|---|
+| Archive nothing (baseline) | 0% | n/a | 0% | 0% |
+| Original keyword rules | 88.3% | 63.9% | 33.3% | 40.0% |
+| Rules v2 (this repo) | 88.3% | 100% | 0.0% | 0.0% |
+| Llama 3 8B local, archive-if-low-importance | 96.7% | 65.2% | 34.4% | 0.0% |
+
+Reading this honestly: the data is synthetic and the labels are mine, so the rules score is partly tuned to the test set. Treat it as a regression guard, not as accuracy on real mail. The LLM row shows a plain "archive if not important" policy is unsafe, which is why `assist` is the default and the LLM never archives on its own.
+Latency (`GET /api/metrics`) and cost per email are not yet documented.
+
+## Known limits
+- No login. Server is localhost-only; browser cross-site writes are blocked, but any local program can reach the API.
+- No automatic undo for archived mail (audit log exists).
+- Synthetic test set only; no real-user results yet.
+- Prompt-injection behavior is not tested.
+- Docker path is untested; first-time Gmail OAuth needs a host browser.
 ## 🚀 Quick Start
 
 ### Prerequisites
@@ -145,7 +165,7 @@ python run_app.py
 
 ```
 Local:   http://localhost:8001
-Network: http://<your-local-ip>:8001
+Network: off by default. Set INBOXIQ_HOST=0.0.0.0 only on a trusted network (no login).
 ```
 
 On first launch, a browser window will open for Gmail OAuth authorization. After approving, `token.json` is saved and the worker starts polling automatically.
@@ -265,9 +285,9 @@ Each new email goes through a 6-stage LangGraph pipeline:
 
 ## 🔒 Privacy & Security
 
-- **Local-first**: Ollama runs entirely on your machine. No email content is sent to any external server when using local mode.
+- **Local-first**: With no `GEMINI_API_KEY`, email text stays on your machine. If a key is set and Ollama is down, prompts containing email text go to Google Gemini.
 - **Secrets gitignored**: `.env`, `gmail_credentials.json`, `token.json`, and `inboxiq.db` are all excluded from version control.
-- **Read-only by default**: Autopilot auto-send is disabled. The system never sends emails without explicit user action unless `AUTOPILOT_AUTO_SEND_REPLIES=true`.
+- **Safe by default**: `AUTOPILOT_MODE=assist` never changes Gmail; it logs what it would do. Auto-send is off. Server binds to 127.0.0.1, with cross-origin write blocking and Host checks. There is no login yet.
 - **OAuth 2.0**: Gmail access uses Google's standard OAuth flow with `gmail.modify` scope.
 
 ---
@@ -299,5 +319,5 @@ MIT License — see [LICENSE](LICENSE) for details.
 
 <div align="center">
 Built with FastAPI, React, LangGraph, and local LLMs.<br/>
-<strong>Zero cloud-leak. Full inbox intelligence.</strong>
+<strong>Local-first. Measured. Reversible by default.</strong>
 </div>

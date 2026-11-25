@@ -28,7 +28,7 @@ if (-not (Test-Path "frontend/dist")) {
 
 # 5. Launch Application
 Write-Host "Launching InBoxIQ AI Work OS..." -ForegroundColor Green
-Write-Host "Dashboard: http://localhost:8000" -ForegroundColor Cyan
+Write-Host "Dashboard: http://localhost:8001" -ForegroundColor Cyan
 Write-Host "Worker will check Gmail every 60 seconds." -ForegroundColor Cyan
 
 python run_app.py

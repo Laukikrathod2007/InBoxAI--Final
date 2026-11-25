@@ -48,7 +48,7 @@ OLLAMA_BASE_URL=http://localhost:11434
 python run_app.py
 ```
 This will start both the server and the worker.
-- **Local Access**: [http://localhost:8000](http://localhost:8000)
+- **Local Access**: [http://localhost:8001](http://localhost:8001)
 - **Network Access**: Accessible from other devices via your local IP (displayed in console).
 
 ## 🧠 Using the AI Work OS
