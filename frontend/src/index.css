@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+﻿@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
 @import "tailwindcss";
 
@@ -161,24 +161,4 @@ button {
 }
 button:active { transform: scale(0.98); }
 
-
-/* ---- Landing page ---- */
-html { scroll-behavior: smooth; scroll-padding-top: 5rem; }
-
-.bg-grid {
-  background-image:
-    linear-gradient(to right, rgba(15, 23, 42, 0.06) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(15, 23, 42, 0.06) 1px, transparent 1px);
-  background-size: 48px 48px;
-}
-
-@keyframes word-in {
-  from { opacity: 0; transform: translateY(40%); }
-  to { opacity: 1; transform: translateY(0); }
-}
-.animate-word { animation: word-in 0.45s cubic-bezier(0.2, 0.8, 0.2, 1); }
-
-@media (prefers-reduced-motion: reduce) {
-  html { scroll-behavior: auto; }
-  .animate-word { animation: none; }
-}
+/* Landing page styles live in src/landing/landing.css (imported by Landing.jsx). */

@@ -1,0 +1,108 @@
+/* InBoxIQ landing page motion. Scroll progress arrives as --p (0..1) and pointer
+   position as --mx / --my (-1..1). Everything is disabled under reduced motion. */
+
+html { scroll-behavior: smooth; scroll-padding-top: 6rem; }
+
+.bg-grid {
+  background-image:
+    linear-gradient(to right, rgba(15, 23, 42, 0.055) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(15, 23, 42, 0.055) 1px, transparent 1px);
+  background-size: 52px 52px;
+}
+.bg-dots {
+  background-image: radial-gradient(rgba(15, 23, 42, 0.09) 1px, transparent 1px);
+  background-size: 16px 16px;
+  mask-image: radial-gradient(ellipse at center, black, transparent 75%);
+}
+.bg-grid-dark {
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+  background-size: 44px 44px;
+}
+
+/* Hero word pill */
+@keyframes word-in { from { opacity: 0; transform: translateY(45%); filter: blur(6px); } to { opacity: 1; transform: none; filter: none; } }
+.animate-word { animation: word-in 0.5s cubic-bezier(0.2, 0.8, 0.2, 1); }
+@keyframes pop { 0% { transform: scale(0.6) rotate(-12deg); } 60% { transform: scale(1.08) rotate(4deg); } 100% { transform: none; } }
+.animate-pop { animation: pop 0.55s cubic-bezier(0.2, 0.8, 0.2, 1); }
+
+/* Sorted cards dropping into a column */
+@keyframes drop-in { from { opacity: 0; transform: translateY(-10px) scale(0.97); } to { opacity: 1; transform: none; } }
+.animate-drop { animation: drop-in 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); }
+
+/* 1. Layered parallax: chips and glow drift with the pointer at different depths */
+.floater {
+  transform: translate3d(calc(var(--mx, 0) * var(--d) * 1px), calc(var(--my, 0) * var(--d) * 1px), 0) rotate(var(--r));
+  transition: transform 0.25s ease-out;
+  animation: float-idle 6s ease-in-out infinite;
+}
+.floater:nth-child(2n) { animation-delay: -3s; }
+@keyframes float-idle { 50% { margin-top: -10px; } }
+.parallax-blob { transform: translate3d(calc(-50% + var(--mx, 0) * -30px), calc(var(--my, 0) * -20px), 0); transition: transform 0.4s ease-out; }
+
+/* 3. 3D card zoom: tilted back, flattens and scales up as it scrolls in */
+.zoom-card {
+  transform-origin: 50% 0%;
+  transform: rotateX(calc(22deg - var(--p, 0.5) * 44deg)) scale(calc(0.88 + var(--p, 0.5) * 0.24));
+  will-change: transform;
+}
+
+/* 4. Line-by-line reveal */
+.line-up { transform: translateY(105%); transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.line-up.is-in { transform: none; }
+
+/* Generic reveal on scroll */
+.reveal { opacity: 0; transform: translateY(24px); transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.reveal.is-in { opacity: 1; transform: none; }
+
+/* 5. Sideways text: rows slide opposite ways with scroll */
+.band-left { transform: translate3d(calc(var(--p, 0.5) * -40%), 0, 0); will-change: transform; }
+.band-right { transform: translate3d(calc(-40% + var(--p, 0.5) * 40%), 0, 0); will-change: transform; }
+
+/* 3D tilt cards with a pointer highlight */
+.tilt {
+  transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+  transition: transform 0.2s ease-out, box-shadow 0.3s ease;
+  transform-style: preserve-3d;
+}
+.tilt:hover { box-shadow: 0 30px 60px -30px rgba(76, 29, 149, 0.35); }
+.tilt::after {
+  content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0;
+  background: radial-gradient(400px circle at var(--gx, 50%) var(--gy, 50%), rgba(255, 255, 255, 0.35), transparent 40%);
+  transition: opacity 0.3s ease;
+}
+.tilt:hover::after { opacity: 1; }
+
+/* 8. Stacking cards */
+.stack-card { transition: transform 0.4s ease; }
+
+/* Typing caret */
+.caret { animation: caret 1s steps(1) infinite; }
+@keyframes caret { 50% { opacity: 0; } }
+
+/* Button sheen */
+.btn-sheen { position: relative; overflow: hidden; isolation: isolate; }
+.btn-sheen::before {
+  content: ''; position: absolute; inset: 0; z-index: -1;
+  background: linear-gradient(110deg, transparent 35%, rgba(255, 255, 255, 0.28) 50%, transparent 65%);
+  transform: translateX(-120%); animation: sheen 3.6s ease-in-out infinite;
+}
+@keyframes sheen { 60%, 100% { transform: translateX(120%); } }
+
+/* Mascot: bob, blink, wave, and eyes that follow the pointer */
+.mascot-bob { animation: bob 4s ease-in-out infinite; }
+@keyframes bob { 50% { transform: translateY(-8px); } }
+.mascot-eyes { transform: translate(calc(var(--mx, 0) * 3.5px), calc(var(--my, 0) * 3px)); transition: transform 0.15s ease-out; }
+.mascot-blink { transform-origin: 80px 72px; animation: blink 5s infinite; }
+@keyframes blink { 0%, 94%, 100% { transform: scaleY(1); } 97% { transform: scaleY(0.1); } }
+.mascot-wave { transform-origin: 0 10px; animation: wave 2.8s ease-in-out infinite; }
+@keyframes wave { 0%, 60%, 100% { transform: rotate(0); } 70% { transform: rotate(-18deg); } 80% { transform: rotate(10deg); } 90% { transform: rotate(-10deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .animate-word, .animate-pop, .animate-drop, .floater, .mascot-bob, .mascot-blink, .mascot-wave, .btn-sheen::before, .caret { animation: none !important; }
+  .floater, .parallax-blob, .mascot-eyes, .zoom-card, .band-left, .band-right, .tilt { transform: none !important; }
+  .parallax-blob { transform: translateX(-50%) !important; }
+  .reveal, .line-up { opacity: 1; transform: none; transition: none; }
+}
