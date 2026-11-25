@@ -4,6 +4,9 @@ from src.database import EmailRecord, SessionLocal, UserFeedback, init_db
 from src.main import app
 
 client = TestClient(app)
+from src.auth import get_token
+H = {"X-InBoxIQ-Token": get_token()}
+
 
 
 def _seed(email_id="t1"):
@@ -18,7 +21,7 @@ def _seed(email_id="t1"):
 
 def test_override_marks_done_and_records_feedback():
     _seed()
-    r = client.post("/api/overrides", json={"email_id": "t1", "is_done": True})
+    r = client.post("/api/overrides", json={"email_id": "t1", "is_done": True}, headers=H)
     assert r.status_code == 200
     db = SessionLocal()
     assert db.query(EmailRecord).get("t1").status == "archived"
@@ -28,5 +31,5 @@ def test_override_marks_done_and_records_feedback():
 
 def test_override_unknown_email_returns_404():
     _seed()
-    r = client.post("/api/overrides", json={"email_id": "missing", "is_done": True})
+    r = client.post("/api/overrides", json={"email_id": "missing", "is_done": True}, headers=H)
     assert r.status_code == 404

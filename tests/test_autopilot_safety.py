@@ -50,5 +50,6 @@ def test_autonomous_mode_archives():
 
 
 def test_metrics_endpoint_shape():
-    r = TestClient(app).get("/api/metrics")
+    from src.auth import get_token
+    r = TestClient(app).get("/api/metrics", headers={"X-InBoxIQ-Token": get_token()})
     assert r.status_code == 200 and "p95_ms" in r.json()

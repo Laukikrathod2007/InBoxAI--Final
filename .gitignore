@@ -32,3 +32,6 @@ Thumbs.db
 .vscode/
 .idea/
 *.log
+
+# Local API token
+.inboxiq_token

@@ -11,7 +11,20 @@ from .llm_client import llm_client
 import logging
 from .config import settings
 
-router = APIRouter(prefix="/api")
+from fastapi import Request
+from .auth import require_token, get_token, is_loopback
+
+# Every /api route needs the local token (they expose email content or change state).
+router = APIRouter(prefix="/api", dependencies=[Depends(require_token)])
+public_router = APIRouter(prefix="/api")
+
+
+@public_router.get("/session")
+def get_session(request: Request):
+    """Hand the token to the UI. Loopback clients only; CORS blocks other sites from reading it."""
+    if not is_loopback(request):
+        raise HTTPException(status_code=403, detail="Session is only available on this machine")
+    return {"token": get_token()}
 logger = logging.getLogger(__name__)
 
 from .email_reader import gmail_reader
@@ -252,6 +265,38 @@ def get_stats(db: Session = Depends(get_db)):
         "needs_reply": needs_reply,
         "system_errors": errors
     }
+
+@router.get("/autopilot/audit")
+def get_autopilot_audit(limit: int = 100, db: Session = Depends(get_db)):
+    """What autopilot did (EXECUTED) or would do (DRY_RUN), newest first."""
+    rows = (db.query(SystemLog).filter(SystemLog.component == "autopilot")
+            .order_by(SystemLog.timestamp.desc()).limit(max(1, min(limit, 500))).all())
+    return serialize_db_list(rows)
+
+
+@router.post("/autopilot/undo/{log_id}")
+def undo_autopilot_action(log_id: int, db: Session = Depends(get_db)):
+    """Reverse an executed archive (puts the mail back in INBOX and marks it unread)."""
+    row = db.query(SystemLog).filter(SystemLog.id == log_id, SystemLog.component == "autopilot").first()
+    if not row or not row.details:
+        raise HTTPException(status_code=404, detail="Audit entry not found")
+    d = dict(row.details)
+    if not d.get("executed") or d.get("action") != "archive":
+        raise HTTPException(status_code=400, detail="Only executed archive actions can be undone")
+    if d.get("undone"):
+        return {"status": "already_undone"}
+    ok = gmail_reader.modify_message_labels(d["email_id"], add_label_ids=["INBOX", "UNREAD"])
+    if not ok:
+        raise HTTPException(status_code=502, detail="Gmail did not accept the undo")
+    d["undone"] = True
+    row.details = d
+    email = db.query(EmailRecord).filter(EmailRecord.id == d["email_id"]).first()
+    if email:
+        email.is_done = False
+        email.status = "REVIEW"
+    db.commit()
+    return {"status": "undone", "email_id": d["email_id"]}
+
 
 @router.get("/metrics")
 def get_metrics(db: Session = Depends(get_db)):

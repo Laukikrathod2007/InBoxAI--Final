@@ -18,3 +18,19 @@ os.chdir(SANDBOX)
 os.environ["GMAIL_TOKEN_FILE"] = str(SANDBOX / "no_token.json")
 os.environ["GMAIL_CLIENT_CONFIG"] = str(SANDBOX / "no_credentials.json")
 os.environ["GEMINI_API_KEY"] = ""
+# TestClient uses Host "testserver" and client "testclient"; allow them in tests only.
+os.environ["ALLOWED_HOSTS"] = "testserver"
+os.environ["INBOXIQ_EXTRA_LOOPBACK"] = "testclient"
+os.environ["INBOXIQ_TOKEN_FILE"] = str(SANDBOX / ".inboxiq_token")
+
+
+import pytest  # noqa: E402
+
+
+@pytest.fixture(autouse=True)
+def _fresh_token_headers(request):
+    """Give each test module the current token (one test rotates it on purpose)."""
+    from src.auth import get_token
+    mod = request.module
+    if hasattr(mod, "H"):
+        mod.H = {"X-InBoxIQ-Token": get_token()}

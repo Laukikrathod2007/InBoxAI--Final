@@ -3,6 +3,9 @@ from fastapi.testclient import TestClient
 from src.main import app
 
 client = TestClient(app)
+from src.auth import get_token
+H = {"X-InBoxIQ-Token": get_token()}
+
 
 
 def test_cross_origin_write_is_blocked():
@@ -13,7 +16,7 @@ def test_cross_origin_write_is_blocked():
 
 def test_same_origin_write_is_allowed():
     r = client.post("/api/settings", json={"confidence_threshold": 80},
-                    headers={"Origin": "http://localhost:8001"})
+                    headers={"Origin": "http://localhost:8001", **H})
     assert r.status_code == 200
 
 

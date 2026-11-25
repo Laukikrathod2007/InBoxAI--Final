@@ -55,7 +55,9 @@ def clean_email(text: str) -> str:
     text = re.split(r"\n\s*On .{5,120}wrote:\s*\n", text, maxsplit=1)[0]
     text = text.split("---------- Forwarded message", 1)[0]
     # Remove a sign-off only when it starts a line.
-    text = re.split(r"\n\s*(?:Best regards|Kind regards|Sincerely|Thanks,|Sent from my)", text, maxsplit=1)[0]
+    # Sign-off must be alone on its line ("Thanks, can you..." is content, not a sign-off).
+    text = re.split(r"\n\s*(?:Best regards|Kind regards|Sincerely|Thanks|Cheers),?\s*(?:\n|$)|\n\s*Sent from my",
+                    text, maxsplit=1)[0]
     return text.strip()
 
 def quick_rule_filter(sender: str, subject: str, text: str, attachments: list, thread_history: str) -> Optional[dict]:
@@ -72,7 +74,7 @@ def quick_rule_filter(sender: str, subject: str, text: str, attachments: list, t
     # GitHub notifications carry one). Everything unsure goes to the LLM.
     bulk_sender = any(w in sender_lower for w in
                       ["newsletter", "promo", "marketing", "deals", "offers", "subscription",
-                       "digest", "jobs-noreply", "mailer"])
+                       "digest", "jobs-noreply", "mailchimp"])
     promo_subject = any(w in subject_lower for w in ["discount", "% off", "limited offer", "off your next"])
     if bulk_sender or promo_subject or \
        ("unsubscribe" in text_lower and any(w in sender_lower for w in ["noreply", "no-reply", "hello@", "store@"])
@@ -449,6 +451,7 @@ class LangGraphBrain:
             "secondary_actions": ["View", "Archive", "Snooze"]
         }
         
+        stored = False
         db = SessionLocal()
         try:
             # 1. Update EmailRecord
@@ -572,13 +575,19 @@ class LangGraphBrain:
             )
             db.add(log)
             db.commit()
+            stored = True
         except Exception as e:
             logger.error(f"Failed to store result: {e}")
             db.rollback()
         finally:
             db.close()
 
-        # 3. Autopilot actions (Gmail-side), only after DB write succeeded
+        # 3. Autopilot actions (Gmail-side), only after DB write succeeded.
+        # If the record was not saved, never touch Gmail: the mail would vanish
+        # from the inbox with no trace in the app.
+        if not stored:
+            logger.error(f"Skipping autopilot for {state.get('email_id')}: store failed")
+            return {"finished": True, "ui_data": ui_object}
         try:
             cfg = get_autopilot_config()
             # Gmail is only modified in "autonomous" mode. In "assist" mode the
@@ -593,15 +602,17 @@ class LangGraphBrain:
                     or (cfg.enabled and state.get("decision") == "ARCHIVE" and not live):
                 planned.append(("archive", ""))
             for action, detail in planned:
-                self._audit(state["email_id"], action, detail, executed=live)
                 if not live:
+                    self._audit(state["email_id"], action, detail, executed=False)
                     continue
                 if action == "label":
-                    gmail_reader.apply_label_by_name(state["email_id"], detail)
-                elif action == "archive":
-                    gmail_reader.archive(state["email_id"])
-                    if cfg.mark_read_on_archive:
+                    ok = gmail_reader.apply_label_by_name(state["email_id"], detail)
+                else:
+                    ok = gmail_reader.archive(state["email_id"])
+                    if ok and cfg.mark_read_on_archive:
                         gmail_reader.mark_read(state["email_id"])
+                # Log what really happened, after the call.
+                self._audit(state["email_id"], action, detail, executed=bool(ok))
         except Exception as e:
             logger.error(f"Autopilot action failed for {state.get('email_id')}: {e}")
             

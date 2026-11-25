@@ -85,11 +85,11 @@ Reproduce: `python -m eval.make_dataset` then `python -m eval.run_eval --name ru
 | Llama 3 8B local, archive-if-low-importance | 96.7% | 65.2% | 34.4% | 0.0% |
 
 Reading this honestly: the data is synthetic and the labels are mine, so the rules score is partly tuned to the test set. Treat it as a regression guard, not as accuracy on real mail. The LLM row shows a plain "archive if not important" policy is unsafe, which is why `assist` is the default and the LLM never archives on its own.
-Latency (`GET /api/metrics`) and cost per email are not yet documented.
+**Latency** (measured from the 264 processed emails in my own database, `latency` column, Nov 2026): p50 **8 ms**, p95 **44 s** overall. Rule-filtered mail finishes in milliseconds; the 84 emails that went to the LLM had p50 **22.5 s**, p95 **90 s** on a laptop CPU. All 266 decisions were logged under the Gemini model name, so I cannot say which model served each one. **Cost:** \ with local Ollama; Gemini cost was not tracked. Live numbers: `GET /api/metrics`.
 
 ## Known limits
-- No login. Server is localhost-only; browser cross-site writes are blocked, but any local program can reach the API.
-- No automatic undo for archived mail (audit log exists).
+- Login is a local token (`.inboxiq_token`), handed to the UI only on this machine. Fine for one user on one PC; not a multi-user login.
+- Undo exists for archives done by autopilot (`POST /api/autopilot/undo/{id}`). There is no undo button in the UI yet.
 - Synthetic test set only; no real-user results yet.
 - Prompt-injection behavior is not tested.
 - Docker path is untested; first-time Gmail OAuth needs a host browser.

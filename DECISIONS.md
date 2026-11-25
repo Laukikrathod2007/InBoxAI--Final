@@ -21,3 +21,14 @@ Consequence: Feedback rows now accumulate and can feed later evaluation. A real 
 Context: `COPY .env` and `COPY gmail_credentials.json` put secrets in image layers, and the worker ran twice.
 Decision: Mount secrets at run time, run one uvicorn process, use port 8001 like the rest of the code.
 Consequence: Docker is still not a full path: first-time Gmail OAuth needs a browser on the host.
+
+## 2026-11-25: Local API token instead of a user login
+Context: Any program or page reaching 127.0.0.1:8001 could read mail and send email.
+Options: (A) username/password with sessions, (B) OAuth via Google, (C) a random local token handed to the same-origin UI.
+Decision: C. One user on one machine; it blocks other local processes and web pages without a login screen. An empty token file regenerates the token (found by review).
+Consequence: Not suitable for hosting or several users. Revisit with (B) if this ever runs on a server.
+
+## 2026-11-25: Undo and truthful audit for autopilot
+Context: Autonomous archive had no undo, and the audit could say EXECUTED for a failed Gmail call.
+Decision: Write the audit row after the Gmail call with the real result; skip Gmail entirely if the DB write failed; add an undo route that restores INBOX and UNREAD.
+Consequence: Labels added by autopilot are not undone yet.

@@ -20,14 +20,14 @@ app.add_middleware(
     ] + [o for o in os.getenv("CORS_ORIGINS", "").split(",") if o.strip()],
     allow_credentials=False,
     allow_methods=["GET", "POST"],
-    allow_headers=["Content-Type"],
+    allow_headers=["Content-Type", "X-InBoxIQ-Token"],
 )
 
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
 
-ALLOWED_HOSTS = ["localhost", "127.0.0.1", "testserver"] + \
+ALLOWED_HOSTS = ["localhost", "127.0.0.1"] + \
     [h.strip() for h in os.getenv("ALLOWED_HOSTS", "").split(",") if h.strip()]
 ALLOWED_ORIGINS = {"http://localhost:8001", "http://127.0.0.1:8001",
                    "http://localhost:5173", "http://127.0.0.1:5173"} | \
@@ -49,6 +49,11 @@ app.add_middleware(OriginGuard)
 # Rejects DNS-rebinding: requests must use a known Host header.
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=ALLOWED_HOSTS)
 
+from fastapi import Depends
+from .api_routes import public_router
+from .auth import require_token
+
+app.include_router(public_router)
 app.include_router(api_router)
 
 # Frontend dist folder (mounted later so API routes win)
@@ -77,7 +82,7 @@ async def root():
         return FileResponse(frontend_index)
     return {"status": "InBoxIQ API is running (Frontend not built)", "manual_trigger": "/process-now"}
 
-@app.post("/process-now")
+@app.post("/process-now", dependencies=[Depends(require_token)])
 async def trigger_manual_poll(background_tasks: BackgroundTasks):
     """
     Manually trigger one email processing cycle.
@@ -86,12 +91,12 @@ async def trigger_manual_poll(background_tasks: BackgroundTasks):
     background_tasks.add_task(worker.process_cycle)
     return {"message": "Processing cycle triggered in background"}
 
-@app.get("/automation/status")
+@app.get("/automation/status", dependencies=[Depends(require_token)])
 async def automation_status():
     """Get autonomous worker runtime status."""
     return worker.get_status()
 
-@app.post("/automation/start")
+@app.post("/automation/start", dependencies=[Depends(require_token)])
 async def automation_start():
     """Start autonomous worker loop if it is stopped."""
     started = worker.start_auto()
@@ -101,7 +106,7 @@ async def automation_start():
         "details": worker.get_status(),
     }
 
-@app.post("/automation/stop")
+@app.post("/automation/stop", dependencies=[Depends(require_token)])
 async def automation_stop():
     """Stop autonomous worker loop."""
     worker.stop_auto()
