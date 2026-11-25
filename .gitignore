@@ -35,3 +35,7 @@ Thumbs.db
 
 # Local API token
 .inboxiq_token
+
+# Real-mail eval files (never commit)
+eval/data/real_export.csv
+eval/data/real_labels.csv

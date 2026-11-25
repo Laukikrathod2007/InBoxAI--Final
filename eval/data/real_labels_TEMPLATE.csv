@@ -1,0 +1,4 @@
+id,label
+# Copy this file to eval/data/real_labels.csv (that name is gitignored).
+# Run: python -m eval.export_real  -> lists your latest 50 processed email ids with subjects.
+# For each id write one label: noise, needs_action, or fyi. Delete these comment lines.
