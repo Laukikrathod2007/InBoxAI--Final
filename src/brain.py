@@ -50,12 +50,12 @@ class AgentState(TypedDict):
 def clean_email(text: str) -> str:
     """ UPGRADED: Remove signatures and quoted replies """
     if not text: return ""
-    # Remove quoted replies
-    text = text.split("On ", 1)[0]
+    import re
+    # Cut only at a real quoted-reply header ("On <date>, X wrote:"), not at any "On ".
+    text = re.split(r"\n\s*On .{5,120}wrote:\s*\n", text, maxsplit=1)[0]
     text = text.split("---------- Forwarded message", 1)[0]
-    # Remove common signatures
-    for sig in ["Best regards", "Kind regards", "Sincerely", "Thanks,", "Sent from my"]:
-        text = text.split(sig, 1)[0]
+    # Remove a sign-off only when it starts a line.
+    text = re.split(r"\n\s*(?:Best regards|Kind regards|Sincerely|Thanks,|Sent from my)", text, maxsplit=1)[0]
     return text.strip()
 
 def quick_rule_filter(sender: str, subject: str, text: str, attachments: list, thread_history: str) -> Optional[dict]:
@@ -67,9 +67,16 @@ def quick_rule_filter(sender: str, subject: str, text: str, attachments: list, t
     text_lower = text.lower()
     
     # 1. Marketing / Noise
-    if "unsubscribe" in text_lower or "list-unsubscribe" in text_lower or \
-       any(word in sender_lower for word in ["newsletter", "promo", "marketing", "deals", "offers", "subscription"]) or \
-       any(word in subject_lower for word in ["discount", "sale", "limited offer", "off your next"]):
+    # Precision first: a rule may only hide mail when it is very sure. An
+    # "unsubscribe" footer alone is NOT enough (contracts, project mail and
+    # GitHub notifications carry one). Everything unsure goes to the LLM.
+    bulk_sender = any(w in sender_lower for w in
+                      ["newsletter", "promo", "marketing", "deals", "offers", "subscription",
+                       "digest", "jobs-noreply", "mailer"])
+    promo_subject = any(w in subject_lower for w in ["discount", "% off", "limited offer", "off your next"])
+    if bulk_sender or promo_subject or \
+       ("unsubscribe" in text_lower and any(w in sender_lower for w in ["noreply", "no-reply", "hello@", "store@"])
+        and not any(w in subject_lower for w in ["invoice", "payment", "security", "contract", "review requested"])):
         return {
             "bucket": "MARKETING_NOISE",
             "is_noise": True,
@@ -95,9 +102,10 @@ def quick_rule_filter(sender: str, subject: str, text: str, attachments: list, t
         }
         
     # 2. Automated Notifications
-    if "no-reply" in sender_lower or "donotreply" in sender_lower or "notification" in sender_lower or \
-       "alert" in sender_lower or "jira" in sender_lower or "github" in sender_lower or \
-       any(word in subject_lower for word in ["notification", "alert", "daily update", "status report"]):
+    # Only routine status mail from automated senders. Ticket, review, security
+    # and payment mail is never matched here; the LLM decides those.
+    if ("no-reply" in sender_lower or "noreply" in sender_lower or "donotreply" in sender_lower) and \
+       any(word in subject_lower for word in ["daily update", "status report", "weekly digest"]):
         return {
             "bucket": "AUTOMATED_NOTIFICATIONS",
             "is_noise": True,
@@ -573,13 +581,24 @@ class LangGraphBrain:
         # 3. Autopilot actions (Gmail-side), only after DB write succeeded
         try:
             cfg = get_autopilot_config()
-            if cfg.enabled:
-                if cfg.apply_labels:
-                    label = label_for_category(state.get("category", ""))
-                    if label:
-                        gmail_reader.apply_label_by_name(state["email_id"], label)
-
-                if should_auto_archive(state.get("decision", ""), state.get("is_noise", False), state.get("category", "")):
+            # Gmail is only modified in "autonomous" mode. In "assist" mode the
+            # intended action is logged (dry run) so you can review it first.
+            live = cfg.enabled and cfg.mode == "autonomous"
+            planned = []
+            if cfg.enabled and cfg.apply_labels:
+                label = label_for_category(state.get("category", ""))
+                if label:
+                    planned.append(("label", label))
+            if should_auto_archive(state.get("decision", ""), state.get("is_noise", False), state.get("category", "")) \
+                    or (cfg.enabled and state.get("decision") == "ARCHIVE" and not live):
+                planned.append(("archive", ""))
+            for action, detail in planned:
+                self._audit(state["email_id"], action, detail, executed=live)
+                if not live:
+                    continue
+                if action == "label":
+                    gmail_reader.apply_label_by_name(state["email_id"], detail)
+                elif action == "archive":
                     gmail_reader.archive(state["email_id"])
                     if cfg.mark_read_on_archive:
                         gmail_reader.mark_read(state["email_id"])
@@ -587,6 +606,22 @@ class LangGraphBrain:
             logger.error(f"Autopilot action failed for {state.get('email_id')}: {e}")
             
         return {"finished": True, "ui_data": ui_object}
+
+    def _audit(self, email_id: str, action: str, detail: str, executed: bool):
+        """Record every Gmail action (or dry-run intent) so it can be reviewed and undone."""
+        from .database import SystemLog
+        db = SessionLocal()
+        try:
+            db.add(SystemLog(level="INFO", component="autopilot",
+                             message=f"{'EXECUTED' if executed else 'DRY_RUN'} {action}",
+                             details={"email_id": email_id, "action": action, "detail": detail,
+                                      "executed": executed}))
+            db.commit()
+        except Exception as e:
+            db.rollback()
+            logger.error(f"Audit log failed: {e}")
+        finally:
+            db.close()
 
     def _get_primary_action(self, decision: str) -> str:
         mapping = {

@@ -64,10 +64,15 @@ class LLMClient:
         payload = {
             "model": self.local_model,
             "prompt": full_prompt,
-            "temperature": float(generation_config.get("temperature", TEMPERATURE)),
-            "max_tokens": int(generation_config.get("max_output_tokens", MAX_OUTPUT_TOKENS)),
+            # Ollama only reads sampling settings under "options".
+            "options": {
+                "temperature": float(generation_config.get("temperature", TEMPERATURE)),
+                "num_predict": int(generation_config.get("max_output_tokens", MAX_OUTPUT_TOKENS)),
+            },
             "stream": False,
         }
+        if generation_config.get("response_mime_type") == "application/json":
+            payload["format"] = "json"  # constrains Ollama to valid JSON
         try:
             response = requests.post(
                 f"{self.local_url}/api/generate",
@@ -270,7 +275,10 @@ class LLMClient:
         for i in range(retries):
             raw_text = self._call_with_fallback(prompt, generation_config, system)
             if not raw_text:
-                raw_text = self._local_structured_response(prompt, system)
+                # No model answered. Do NOT invent data: an empty result has 0
+                # confidence, so the brain routes the email to human review.
+                logger.error("No LLM available; returning empty analysis (needs review).")
+                return {}
 
             try:
                 clean_text = raw_text.strip()
@@ -284,10 +292,7 @@ class LLMClient:
             except Exception as e:
                 logger.warning(f"JSON Parsing Attempt {i+1} failed: {str(e)}. Raw text: {repr(raw_text)}")
                 if i == retries - 1:
-                    try:
-                        return json.loads(self._local_structured_response(prompt, system))
-                    except Exception:
-                        return {}
+                    return {}  # unparseable after retries: needs human review
                 continue
         return {}
 

@@ -8,6 +8,16 @@ from .pdf_parser import pdf_parser
 
 logger = logging.getLogger("InBoxIQ.Extractor")
 
+
+def _json_from_llm(text: str) -> dict:
+    """Parse JSON from LLM text, tolerating code fences and surrounding prose.
+    Raises ValueError if no JSON object is found (callers treat that as failure,
+    never as invented data)."""
+    start, end = text.find("{"), text.rfind("}")
+    if start == -1 or end <= start:
+        raise ValueError("no JSON object in LLM output")
+    return json.loads(text[start:end + 1])
+
 class DocumentExtractor:
     """
     Intelligent Document Understanding Engine
@@ -147,7 +157,7 @@ class DocumentExtractor:
 
         try:
             response = llm_client.generate(prompt, max_tokens=1000)
-            data = json.loads(response)
+            data = _json_from_llm(response)
 
             # Calculate confidence based on field completeness
             confidence = self._calculate_confidence(data, [
@@ -200,7 +210,7 @@ class DocumentExtractor:
 
         try:
             response = llm_client.generate(prompt, max_tokens=800)
-            data = json.loads(response)
+            data = _json_from_llm(response)
 
             confidence = self._calculate_confidence(data, [
                 "name", "email", "experience_years"
@@ -234,7 +244,7 @@ class DocumentExtractor:
 
         try:
             response = llm_client.generate(prompt, max_tokens=600)
-            data = json.loads(response)
+            data = _json_from_llm(response)
             confidence = self._calculate_confidence(data, ["form_type"])
             return data, confidence
         except:
@@ -264,7 +274,7 @@ class DocumentExtractor:
 
         try:
             response = llm_client.generate(prompt, max_tokens=600)
-            data = json.loads(response)
+            data = _json_from_llm(response)
             confidence = self._calculate_confidence(data, ["merchant_name", "amount"])
             return data, confidence
         except:
@@ -293,7 +303,7 @@ class DocumentExtractor:
 
         try:
             response = llm_client.generate(prompt, max_tokens=600)
-            data = json.loads(response)
+            data = _json_from_llm(response)
             confidence = self._calculate_confidence(data, ["contract_type", "parties"])
             return data, confidence
         except:
@@ -314,7 +324,7 @@ class DocumentExtractor:
 
         try:
             response = llm_client.generate(prompt, max_tokens=600)
-            data = json.loads(response)
+            data = _json_from_llm(response)
             return data, 0.5  # Low confidence for generic extraction
         except:
             return {"raw_text": text[:1000]}, 0.3
