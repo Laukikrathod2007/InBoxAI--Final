@@ -2,6 +2,7 @@
 
 <div align="center">
 
+[![CI](https://github.com/Laukikrathod2007/InBoxAI--Final/actions/workflows/ci.yml/badge.svg)](https://github.com/Laukikrathod2007/InBoxAI--Final/actions/workflows/ci.yml)
 ![Version](https://img.shields.io/badge/Version-v1.1.0-6366f1?style=for-the-badge)
 ![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![React](https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=black)
