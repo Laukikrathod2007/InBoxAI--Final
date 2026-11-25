@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 
 export default function TopBar({ userProfile, onRefresh, onSearch, activeSection, onNavigate }) {
   const [searchQuery, setSearchQuery] = useState('');
@@ -79,7 +79,7 @@ export default function TopBar({ userProfile, onRefresh, onSearch, activeSection
         {/* User profile dropdown badge */}
         <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-full p-1 pr-2 shadow-sm cursor-pointer hover:bg-slate-50 transition">
           <div className="h-8 w-8 rounded-full bg-slate-500 text-white font-extrabold text-xs flex items-center justify-center uppercase shadow-inner">
-            {userProfile?.name ? userProfile.name.substring(0, 2) : 'RA'}
+            {userProfile?.name ? userProfile.name.substring(0, 2) : '?'}
           </div>
           <span className="material-symbols-outlined text-slate-400 text-[14px] ml-0.5">keyboard_arrow_down</span>
         </div>

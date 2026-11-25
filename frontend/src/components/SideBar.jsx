@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 
 export function BrandLogo({ className = "" }) {
   return (
@@ -40,12 +40,12 @@ export function BrandLogo({ className = "" }) {
   );
 }
 
-export default function SideBar({ userProfile, selectedView, onNavigate, onProcessNow, automationStatus, onToggleAutomation }) {
+export default function SideBar({ userProfile, selectedView, onNavigate, onProcessNow, automationStatus, onToggleAutomation, counts }) {
   const navItems = [
-    { icon: 'notifications_active', label: 'Action Required', id: 'ActionRequired', count: 6 },
-    { icon: 'hourglass_empty', label: 'Waiting / FYI', id: 'WaitingFYI', count: 12 },
-    { icon: 'folder_open', label: 'Documents', id: 'Documents', count: 18 },
-    { icon: 'volume_off', label: 'Noise / Automated', id: 'NoiseAutomated', count: 132 },
+    { icon: 'notifications_active', label: 'Action Required', id: 'ActionRequired', count: counts?.ActionRequired },
+    { icon: 'hourglass_empty', label: 'Waiting / FYI', id: 'WaitingFYI', count: counts?.WaitingFYI },
+    { icon: 'folder_open', label: 'Documents', id: 'Documents', count: counts?.Documents },
+    { icon: 'volume_off', label: 'Noise / Automated', id: 'NoiseAutomated', count: counts?.NoiseAutomated },
     { icon: 'lightbulb', label: 'AI Briefing', id: 'AIBriefing', badge: 'New' },
     { icon: 'settings', label: 'Settings', id: 'Settings' },
   ];
@@ -64,13 +64,13 @@ export default function SideBar({ userProfile, selectedView, onNavigate, onProce
         <div className="flex items-center gap-3">
           <div className="relative">
             <div className="h-12 w-12 rounded-full bg-slate-500 text-white font-extrabold flex items-center justify-center text-sm shadow-inner uppercase">
-              {userProfile?.name ? userProfile.name.substring(0, 2) : 'RA'}
+              {userProfile?.name ? userProfile.name.substring(0, 2) : '?'}
             </div>
             <span className="absolute bottom-0 right-0 block h-3 w-3 rounded-full bg-emerald-500 ring-2 ring-white"></span>
           </div>
           <div className="min-w-0 flex-1">
-            <h2 className="text-sm font-bold text-slate-800 truncate">{userProfile?.name || 'Rathodlaukik184'}</h2>
-            <p className="text-[11px] text-slate-400 truncate mt-0.5">{userProfile?.email || 'rathodlaukik184@gmail.com'}</p>
+            <h2 className="text-sm font-bold text-slate-800 truncate">{userProfile?.name || 'Not connected'}</h2>
+            <p className="text-[11px] text-slate-400 truncate mt-0.5">{userProfile?.email || 'Gmail not connected'}</p>
           </div>
         </div>
         
@@ -78,11 +78,11 @@ export default function SideBar({ userProfile, selectedView, onNavigate, onProce
         <div className="mt-4 grid grid-cols-2 gap-2 text-center border-t border-slate-100 pt-3">
           <div>
             <p className="text-[9px] uppercase font-extrabold tracking-[0.2em] text-slate-400">Messages</p>
-            <p className="text-sm font-bold text-slate-700 mt-0.5">{userProfile?.total_messages || '10,317'}</p>
+            <p className="text-sm font-bold text-slate-700 mt-0.5">{userProfile?.total_messages ?? '-'}</p>
           </div>
           <div className="border-l border-slate-100">
             <p className="text-[9px] uppercase font-extrabold tracking-[0.2em] text-slate-400">Threads</p>
-            <p className="text-sm font-bold text-slate-700 mt-0.5">{userProfile?.labels || '9,568'}</p>
+            <p className="text-sm font-bold text-slate-700 mt-0.5">{userProfile?.labels ?? '-'}</p>
           </div>
         </div>
       </div>
@@ -109,7 +109,7 @@ export default function SideBar({ userProfile, selectedView, onNavigate, onProce
               </div>
               
               {/* Badge or Counts */}
-              {item.count && (
+              {item.count > 0 && (
                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                   isActive ? 'bg-slate-200 text-slate-800' : 'bg-slate-100 text-slate-500'
                 }`}>
@@ -153,10 +153,10 @@ export default function SideBar({ userProfile, selectedView, onNavigate, onProce
                 Live Sync
               </p>
               <p className="text-[10px] text-slate-500 mt-1">
-                Worker status: <span className="font-semibold text-[#0F9D58]">Running</span>
+                Worker status: <span className="font-semibold text-[#0F9D58]">{automationStatus?.automation_active ? 'Running' : 'Stopped'}</span>
               </p>
               <p className="text-[10px] text-slate-400 mt-0.5">
-                Last sync: 18 sec ago
+                Last sync: {automationStatus?.last_cycle_at ? new Date(automationStatus.last_cycle_at).toLocaleTimeString() : 'never'}
               </p>
             </div>
             

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Toaster, toast } from 'sonner';
 import SideBar from './components/SideBar';
@@ -30,6 +30,7 @@ export default function App() {
   const [userProfile, setUserProfile] = useState(null);
   const [emailGroups, setEmailGroups] = useState({});
   const [historyEmails, setHistoryEmails] = useState([]);
+  const [auditLog, setAuditLog] = useState([]);
   const [searchResults, setSearchResults] = useState([]);
   const [automationStatus, setAutomationStatus] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -138,6 +139,9 @@ export default function App() {
       setUserProfile(profileRes.data);
       setEmailGroups(categoriesRes.data);
       setHistoryEmails(historyList);
+      axios.get(`${API_BASE}/autopilot/audit`, { params: { limit: 50 } })
+        .then((r) => setAuditLog(r.data || []))
+        .catch(() => setAuditLog([]));
       setAutomationStatus(automationRes.data);
       setDocumentExtractions(extractionsList);
       setExtractionStats(extractionStatsRes.data);
@@ -233,6 +237,16 @@ export default function App() {
     }
   };
 
+  const handleUndo = async (logId) => {
+    try {
+      await axios.post(`${API_BASE}/autopilot/undo/${logId}`);
+      toast.success('Restored to your inbox.');
+      refreshDashboard();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Undo failed.');
+    }
+  };
+
   const handleProcessNow = async () => {
     try {
       await axios.post('/process-now');
@@ -289,6 +303,13 @@ export default function App() {
       ]
     };
   });
+
+  const sidebarCounts = {
+    ActionRequired: getFilteredEmails('ActionRequired', historyEmails).length,
+    WaitingFYI: getFilteredEmails('WaitingFYI', historyEmails).length,
+    Documents: documentExtractions.length,
+    NoiseAutomated: getFilteredEmails('NoiseAutomated', historyEmails).length,
+  };
 
   // Derive dynamic stats for Briefing dashboard
   const actionItemsCount = historyEmails.filter(item => 
@@ -388,6 +409,7 @@ export default function App() {
         onProcessNow={handleProcessNow}
         automationStatus={automationStatus}
         onToggleAutomation={toggleAutomation}
+        counts={sidebarCounts}
       />
 
       <TopBar
@@ -688,6 +710,45 @@ export default function App() {
             </div>
           )}
 
+          {/* Autopilot activity with undo (shown under Archive) */}
+          {selectedView === 'Archive' && (
+            <section aria-labelledby="audit-title" className="rounded-3xl bg-white p-6 border border-slate-200 shadow-sm">
+              <h3 id="audit-title" className="text-xl font-bold text-slate-900 mb-1">Autopilot activity</h3>
+              <p className="text-xs text-slate-500 mb-4">
+                DRY RUN = what assist mode would do (Gmail unchanged). DONE = changed in Gmail.
+              </p>
+              {auditLog.length === 0 ? (
+                <p className="text-sm text-slate-500">No autopilot actions yet.</p>
+              ) : (
+                <ul className="divide-y divide-slate-100">
+                  {auditLog.map((row) => {
+                    const d = row.details || {};
+                    const canUndo = d.executed && d.action === 'archive' && !d.undone;
+                    return (
+                      <li key={row.id} className="flex items-center justify-between gap-3 py-3 text-sm">
+                        <span className="min-w-0 truncate">
+                          <span className={`mr-2 rounded px-2 py-0.5 text-[10px] font-bold ${d.executed ? 'bg-rose-50 text-rose-700' : 'bg-slate-100 text-slate-600'}`}>
+                            {d.undone ? 'UNDONE' : d.executed ? 'DONE' : 'DRY RUN'}
+                          </span>
+                          {d.action}{d.detail ? ` (${d.detail})` : ''} · {d.email_id}
+                        </span>
+                        {canUndo && (
+                          <button
+                            type="button"
+                            onClick={() => handleUndo(row.id)}
+                            className="shrink-0 rounded-xl border border-slate-200 px-3 py-1.5 text-xs font-semibold hover:bg-slate-50"
+                          >
+                            Undo
+                          </button>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </section>
+          )}
+
           {/* VIEW: Rules */}
           {selectedView === 'Rules' && (
             <div className="flex flex-col gap-8 animate-in">
@@ -787,7 +848,7 @@ export default function App() {
                 {/* Right greeting block */}
                 <div className="bg-indigo-50/40 border border-indigo-100/50 rounded-3xl p-6 shadow-sm flex flex-col justify-center min-w-[280px]">
                   <h3 className="text-lg font-black text-slate-900 flex items-center gap-1.5">
-                    Good morning, {userProfile?.name?.split(' ')[0] || 'Laukik'} ☀️
+                    Good morning, {userProfile?.name?.split(' ')[0] || 'there'} ☀️
                   </h3>
                   <p className="text-xs text-slate-500 mt-1 font-semibold">Here's what matters today.</p>
                 </div>
