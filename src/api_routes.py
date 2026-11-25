@@ -6,7 +6,6 @@ from datetime import datetime, timedelta
 from typing import List, Optional
 from pydantic import BaseModel
 from .database import get_db, EmailRecord, ThreadRecord, SystemLog, UserFeedback
-from .chat_engine import chat_engine
 from .llm_client import llm_client
 import logging
 from .config import settings
