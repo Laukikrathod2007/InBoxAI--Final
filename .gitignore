@@ -45,3 +45,6 @@ eval/data/real_labels.csv
 eval/data/real_meta.json
 token.expired.json
 token.dummy.json
+
+# Generated Hugging Face static Space
+hf-space/

@@ -4,6 +4,8 @@ import tailwindcss from '@tailwindcss/vite'
 
 // https://vite.dev/config/
 export default defineConfig({
+  // Relative asset paths so the static demo works from any sub-path (e.g. a Hugging Face Space).
+  base: './',
   plugins: [
     react(),
     tailwindcss(),

@@ -405,6 +405,11 @@ export default function App() {
   return (
     <div className="min-h-screen w-full bg-slate-50 text-slate-900 antialiased">
       <Toaster position="top-center" richColors theme="light" />
+      {import.meta.env.VITE_DEMO === '1' && (
+        <div className="fixed bottom-4 left-1/2 z-[60] -translate-x-1/2 rounded-full bg-slate-900 px-4 py-2 text-xs font-medium text-white shadow-lg">
+          Demo with 80 made-up emails. Runs in your browser, nothing is sent.
+        </div>
+      )}
 
       <SideBar
         userProfile={userProfile}
