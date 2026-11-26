@@ -42,3 +42,4 @@ eval/data/real_labels.csv
 
 # Local browser QA artifacts
 .gstack/
+eval/data/real_meta.json

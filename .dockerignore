@@ -1,0 +1,15 @@
+# Never send secrets or personal data into a Docker build context.
+.env
+token.json
+gmail_credentials.json
+sheets_credentials.json
+.inboxiq_token
+*.db
+eval/data/real_*.csv
+eval/data/real_meta.json
+.git
+.gstack
+**/__pycache__
+.pytest_cache
+frontend/node_modules
+frontend/dist

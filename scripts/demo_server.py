@@ -1,4 +1,4 @@
-"""Run the dashboard on the synthetic mailbox. No Gmail, no LLM, no real data.
+﻿"""Run the dashboard on the synthetic mailbox. No Gmail, no LLM, no real data.
 
   python scripts/demo_server.py      # http://127.0.0.1:8002
 
@@ -21,7 +21,10 @@ os.environ.update({
     "GMAIL_TOKEN_FILE": str(work / "none.json"), "GMAIL_CLIENT_CONFIG": str(work / "none.json"),
     "GEMINI_API_KEY": "", "OLLAMA_BASE_URL": "http://127.0.0.1:9", "AUTOPILOT_MODE": "assist",
     "INBOXIQ_TOKEN_FILE": str(work / ".inboxiq_token"),
-    "CORS_ORIGINS": "http://127.0.0.1:8002,http://localhost:8002",
+    "CORS_ORIGINS": os.getenv("CORS_ORIGINS", "http://127.0.0.1:8002,http://localhost:8002"),
+    # Hosted demos (e.g. Hugging Face) reach the app through their own domain.
+    "ALLOWED_HOSTS": os.getenv("ALLOWED_HOSTS", ""),
+    "INBOXIQ_EXTRA_LOOPBACK": os.getenv("INBOXIQ_EXTRA_LOOPBACK", ""),
 })
 
 from src import main  # noqa: E402
@@ -58,5 +61,7 @@ db.close()
 
 if __name__ == "__main__":
     import uvicorn
-    print("Demo running at http://127.0.0.1:8002  (synthetic data, Gmail untouched)")
-    uvicorn.run(main.app, host="127.0.0.1", port=8002, log_level="warning")
+    host = os.getenv("DEMO_HOST", "127.0.0.1")
+    port = int(os.getenv("DEMO_PORT", "8002"))
+    print(f"Demo running at http://{host}:{port}  (synthetic data, Gmail untouched)")
+    uvicorn.run(main.app, host=host, port=port, log_level="warning")

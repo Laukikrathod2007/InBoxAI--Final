@@ -1,12 +1,12 @@
 ﻿import { useEffect, useRef, useState } from 'react';
-import { RefreshCw, Search, Sparkles } from 'lucide-react';
+import { PenSquare, RefreshCw, Search, Sparkles } from 'lucide-react';
 
 const TITLES = {
   ActionRequired: 'Needs you', WaitingFYI: 'FYI', NoiseAutomated: 'Hidden', Documents: 'Documents',
   Archive: 'Archive & activity', AIBriefing: 'Daily briefing', Rules: 'Rules', Settings: 'Settings', Search: 'Search',
 };
 
-export default function TopBar({ onRefresh, onSearch, activeSection, mode, onAsk }) {
+export default function TopBar({ onRefresh, onSearch, activeSection, mode, onAsk, onCompose }) {
   const [query, setQuery] = useState('');
   const inputRef = useRef(null);
 
@@ -52,6 +52,13 @@ export default function TopBar({ onRefresh, onSearch, activeSection, mode, onAsk
         <kbd className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 rounded border border-slate-200 bg-white px-1.5 text-[10px] font-medium text-slate-400">Ctrl K</kbd>
       </form>
 
+      <button
+        type="button"
+        onClick={onCompose}
+        className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-[13px] font-semibold text-slate-800 hover:bg-slate-50"
+      >
+        <PenSquare size={14} aria-hidden="true" /> Compose
+      </button>
       <button
         type="button"
         onClick={onAsk}

@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 
 export default function RightPanel({ selectedView, stats, automationStatus, extractionStats, reviewQueue, aiBriefing = '', onRunBriefing, onAskOpen }) {
   const recommendations = [
@@ -120,7 +120,7 @@ export default function RightPanel({ selectedView, stats, automationStatus, extr
           <div className="flex flex-col gap-3">
             {recommendations.map((rec, idx) => (
               <div key={idx} className={`flex items-center gap-3 rounded-3xl border border-slate-200 bg-white p-4 ${rec.color}`}>
-                <span className="material-symbols-outlined text-xl">{rec.icon}</span>
+                <span aria-hidden="true" className="material-symbols-outlined text-xl">{rec.icon}</span>
                 <p className="text-sm font-semibold text-slate-900">{rec.text}</p>
               </div>
             ))}

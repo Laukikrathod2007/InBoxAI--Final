@@ -7,6 +7,7 @@ import EmailCard from './components/EmailCard';
 import RightPanel from './components/RightPanel';
 import EmailList from './components/EmailList';
 import AskModal from './components/AskModal';
+import ComposeModal from './components/ComposeModal';
 
 const API_BASE = '/api';
 
@@ -36,6 +37,7 @@ export default function App() {
   const [automationStatus, setAutomationStatus] = useState(null);
   const [loading, setLoading] = useState(true);
   const [askOpen, setAskOpen] = useState(false);
+  const [composeOpen, setComposeOpen] = useState(false);
   const [askResponse, setAskResponse] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [documentExtractions, setDocumentExtractions] = useState([]);
@@ -414,7 +416,7 @@ export default function App() {
         counts={sidebarCounts}
       />
 
-      <TopBar onRefresh={refreshDashboard} onSearch={handleSearch} activeSection={selectedView} mode={autopilotMode} onAsk={() => setAskOpen(true)} />
+      <TopBar onRefresh={refreshDashboard} onSearch={handleSearch} activeSection={selectedView} mode={autopilotMode} onAsk={() => setAskOpen(true)} onCompose={() => setComposeOpen(true)} />
 
       <main className="ml-64 pt-16 min-h-screen">
         <div className="mx-auto flex max-w-5xl flex-col gap-6 px-8 py-8">
@@ -429,10 +431,10 @@ export default function App() {
 
               {/* Human-in-the-Loop Review Queue */}
               {reviewQueue.length > 0 && (
-                <div className="rounded-3xl border-2 border-amber-300 bg-amber-50/30 p-6 shadow-sm">
+                <div className="rounded-2xl border-2 border-amber-300 bg-amber-50/30 p-6 shadow-sm">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
-                      <span className="material-symbols-outlined text-amber-600">gavel</span>
+                      <span aria-hidden="true" className="material-symbols-outlined text-amber-600">gavel</span>
                       <h3 className="text-lg font-bold text-amber-900">Needs Human Verification ({reviewQueue.length})</h3>
                     </div>
                     <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-800">RISK OVERRIDE QUEUE</span>
@@ -457,7 +459,7 @@ export default function App() {
                         
                         <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
                           <span className="text-[11px] font-semibold text-amber-700 flex items-center gap-1">
-                            <span className="material-symbols-outlined text-xs">sentiment_neutral</span>
+                            <span aria-hidden="true" className="material-symbols-outlined text-xs">sentiment_neutral</span>
                             Confidence: {item.confidence ?? 0}%
                           </span>
                           <div className="flex gap-2">
@@ -541,36 +543,36 @@ export default function App() {
               {/* Extraction Summary */}
               <div className="grid grid-cols-3 gap-6">
                 <div className="rounded-2xl bg-white border border-slate-200 overflow-hidden flex flex-col justify-between">
-                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">Total Extracted Documents</p>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Total Extracted Documents</p>
                   <div className="mt-4 flex items-baseline justify-between">
-                    <p className="text-4xl font-extrabold text-primary">{extractionStats?.total_extractions ?? 0}</p>
-                    <span className="material-symbols-outlined text-slate-300 text-3xl">cloud_done</span>
+                    <p className="text-3xl font-semibold text-primary">{extractionStats?.total_extractions ?? 0}</p>
+                    <span aria-hidden="true" className="material-symbols-outlined text-slate-300 text-3xl">cloud_done</span>
                   </div>
                 </div>
                 <div className="rounded-2xl bg-white border border-slate-200 overflow-hidden flex flex-col justify-between">
-                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">AI Extraction Success</p>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">AI Extraction Success</p>
                   <div className="mt-4 flex items-baseline justify-between">
-                    <p className="text-4xl font-extrabold text-emerald-600">{extractionStats?.success_rate ?? 0}%</p>
-                    <span className="material-symbols-outlined text-emerald-200 text-3xl">task_alt</span>
+                    <p className="text-3xl font-semibold text-emerald-600">{extractionStats?.success_rate ?? 0}%</p>
+                    <span aria-hidden="true" className="material-symbols-outlined text-emerald-200 text-3xl">task_alt</span>
                   </div>
                 </div>
                 <div className="rounded-2xl bg-white border border-slate-200 overflow-hidden flex flex-col justify-between">
-                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">Pending Review</p>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Pending Review</p>
                   <div className="mt-4 flex items-baseline justify-between">
-                    <p className="text-4xl font-extrabold text-rose-600">{reviewQueue.length}</p>
-                    <span className="material-symbols-outlined text-rose-200 text-3xl">rate_review</span>
+                    <p className="text-3xl font-semibold text-rose-600">{reviewQueue.length}</p>
+                    <span aria-hidden="true" className="material-symbols-outlined text-rose-200 text-3xl">rate_review</span>
                   </div>
                 </div>
               </div>
 
               {/* Document Extractions Grid */}
-              <div className="rounded-3xl bg-white p-8 border border-slate-200 shadow-sm">
+              <div className="rounded-2xl bg-white p-8 border border-slate-200 shadow-sm">
                 <h3 className="text-xl font-bold text-slate-900 mb-6">Parsed PDF Records</h3>
                 {documentExtractions.length > 0 ? (
                   <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                       <thead>
-                        <tr className="border-b border-slate-100 text-xs font-bold uppercase tracking-[0.12em] text-slate-400">
+                        <tr className="border-b border-slate-100 text-xs font-bold uppercase tracking-wide text-slate-400">
                           <th className="py-4">Document Type</th>
                           <th className="py-4">File Name</th>
                           <th className="py-4">Confidence</th>
@@ -582,7 +584,7 @@ export default function App() {
                         {documentExtractions.map((doc) => (
                           <tr key={doc.id} className="hover:bg-slate-50/50 transition">
                             <td className="py-4 font-bold text-slate-900">
-                              <span className={`inline-block rounded-xl px-3 py-1 text-xs font-bold uppercase tracking-[0.1em] ${doc.document_type === 'invoice' ? 'bg-indigo-50 text-indigo-700' : 'bg-emerald-50 text-emerald-700'}`}>
+                              <span className={`inline-block rounded-xl px-3 py-1 text-xs font-bold uppercase tracking-wide ${doc.document_type === 'invoice' ? 'bg-indigo-50 text-indigo-700' : 'bg-emerald-50 text-emerald-700'}`}>
                                 {doc.document_type || 'Unknown'}
                               </span>
                             </td>
@@ -614,7 +616,7 @@ export default function App() {
                   </div>
                 ) : (
                   <div className="py-12 text-center text-slate-400">
-                    <span className="material-symbols-outlined text-5xl">folder_zip</span>
+                    <span aria-hidden="true" className="material-symbols-outlined text-5xl">folder_zip</span>
                     <p className="mt-4 text-sm font-semibold">No extracted documents found</p>
                     <p className="mt-1 text-xs">AI will process PDF attachments automatically when emails arrive.</p>
                   </div>
@@ -674,9 +676,9 @@ export default function App() {
               </div>
 
               <div className="rounded-2xl bg-white border border-slate-200 overflow-hidden">
-                <h3 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
-                  <span className="material-symbols-outlined text-slate-400">archive</span>
-                  Archive Registry
+                <h3 className="border-b border-slate-100 px-5 py-3 text-sm font-semibold text-slate-900 flex items-center gap-2">
+                  <span aria-hidden="true" className="material-symbols-outlined text-slate-400">archive</span>
+                  Finished mail
                 </h3>
                 <EmailList
                   emails={searchResults}
@@ -742,11 +744,11 @@ export default function App() {
                   { name: "Quora", desc: "Groups question-and-answer forum updates and digest emails.", patterns: "quora", count: emailGroups.Quora?.count ?? 0, icon: "quiz", color: "text-amber-600 bg-amber-50" },
                   { name: "Marketing", desc: "Identifies newsletters, promotions, sales deals, and unsubscribe links.", patterns: "newsletter, promo, marketing, sales, deals", count: emailGroups.Marketing?.count ?? 0, icon: "campaign", color: "text-rose-600 bg-rose-50" }
                 ].map((rule) => (
-                  <div key={rule.name} className="rounded-3xl bg-white p-8 border border-slate-200 shadow-sm flex flex-col justify-between hover:border-slate-300 transition-all duration-300">
+                  <div key={rule.name} className="rounded-2xl bg-white p-8 border border-slate-200 shadow-sm flex flex-col justify-between hover:border-slate-300 transition-all duration-300">
                     <div>
                       <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-3">
-                          <span className={`material-symbols-outlined p-3 rounded-2xl ${rule.color}`}>{rule.icon}</span>
+                          <span aria-hidden="true" className={`material-symbols-outlined p-3 rounded-2xl ${rule.color}`}>{rule.icon}</span>
                           <div>
                             <h3 className="text-lg font-bold text-slate-900">{rule.name} Rule</h3>
                             <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400">DETERMINISTIC ROUTER</span>
@@ -804,25 +806,25 @@ export default function App() {
               <div className="flex flex-col md:flex-row items-stretch justify-between gap-6">
                 
                 {/* Left Title details */}
-                <div className="flex-1 bg-white border border-slate-200/80 rounded-3xl p-6 shadow-sm flex items-center gap-4">
+                <div className="flex-1 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex items-center gap-4">
                   <div className="bg-indigo-50 text-indigo-600 p-4 rounded-2xl flex items-center justify-center shrink-0">
-                    <span className="material-symbols-outlined text-3xl">lightbulb</span>
+                    <span aria-hidden="true" className="material-symbols-outlined text-3xl">lightbulb</span>
                   </div>
                   <div>
-                    <h2 className="text-3xl font-black text-slate-900 tracking-tight">AI Briefing</h2>
+                    <h2 className="text-2xl font-semibold tracking-tight text-slate-900">Daily briefing</h2>
                     <p className="text-sm text-slate-500 mt-1">Your daily executive briefing powered by InBoxIQ AI</p>
                   </div>
                   
                   {/* Date picker pill */}
                   <div className="ml-auto bg-slate-50 border border-slate-200 px-4 py-2.5 rounded-2xl flex items-center gap-2 text-xs font-bold text-slate-700 shadow-sm cursor-pointer hover:bg-slate-100 transition shrink-0">
                     <span>{new Date().toLocaleDateString('en-US', {month: 'long', day: 'numeric', year: 'numeric'})}</span>
-                    <span className="material-symbols-outlined text-xs">keyboard_arrow_down</span>
+                    <span aria-hidden="true" className="material-symbols-outlined text-xs">keyboard_arrow_down</span>
                   </div>
                 </div>
 
                 {/* Right greeting block */}
-                <div className="bg-indigo-50/40 border border-indigo-100/50 rounded-3xl p-6 shadow-sm flex flex-col justify-center min-w-[280px]">
-                  <h3 className="text-lg font-black text-slate-900 flex items-center gap-1.5">
+                <div className="bg-indigo-50/40 border border-indigo-100/50 rounded-2xl p-6 shadow-sm flex flex-col justify-center min-w-[280px]">
+                  <h3 className="text-lg font-bold text-slate-900 flex items-center gap-1.5">
                     Good morning, {userProfile?.name?.split(' ')[0] || 'there'} ☀️
                   </h3>
                   <p className="text-xs text-slate-500 mt-1 font-semibold">Here's what matters today.</p>
@@ -834,48 +836,48 @@ export default function App() {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 
                 {/* 1. Action Items */}
-                <div className="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-sm flex items-center gap-4 hover:border-slate-300 transition duration-300">
+                <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex items-center gap-4 hover:border-slate-300 transition duration-300">
                   <div className="bg-indigo-50 text-indigo-600 p-3.5 rounded-2xl shrink-0">
-                    <span className="material-symbols-outlined text-2xl">check_box</span>
+                    <span aria-hidden="true" className="material-symbols-outlined text-2xl">check_box</span>
                   </div>
                   <div>
-                    <h4 className="text-3xl font-black text-slate-900 tracking-tight">{actionItemsCount}</h4>
+                    <h4 className="text-2xl font-semibold tracking-tight text-slate-900">{actionItemsCount}</h4>
                     <p className="text-sm font-bold text-slate-800 mt-0.5">Action Items</p>
                     <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-0.5">Require your attention</p>
                   </div>
                 </div>
 
                 {/* 2. Due Today */}
-                <div className="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-sm flex items-center gap-4 hover:border-slate-300 transition duration-300">
+                <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex items-center gap-4 hover:border-slate-300 transition duration-300">
                   <div className="bg-amber-50 text-amber-600 p-3.5 rounded-2xl shrink-0">
-                    <span className="material-symbols-outlined text-2xl">calendar_today</span>
+                    <span aria-hidden="true" className="material-symbols-outlined text-2xl">calendar_today</span>
                   </div>
                   <div>
-                    <h4 className="text-3xl font-black text-slate-900 tracking-tight">{dueTodayCount}</h4>
+                    <h4 className="text-2xl font-semibold tracking-tight text-slate-900">{dueTodayCount}</h4>
                     <p className="text-sm font-bold text-slate-800 mt-0.5">Due Today</p>
                     <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-0.5">Deadlines & meetings</p>
                   </div>
                 </div>
 
                 {/* 3. Overdue */}
-                <div className="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-sm flex items-center gap-4 hover:border-slate-300 transition duration-300">
+                <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex items-center gap-4 hover:border-slate-300 transition duration-300">
                   <div className="bg-rose-50 text-rose-600 p-3.5 rounded-2xl shrink-0">
-                    <span className="material-symbols-outlined text-2xl">flag</span>
+                    <span aria-hidden="true" className="material-symbols-outlined text-2xl">flag</span>
                   </div>
                   <div>
-                    <h4 className="text-3xl font-black text-slate-900 tracking-tight">{overdueCount}</h4>
+                    <h4 className="text-2xl font-semibold tracking-tight text-slate-900">{overdueCount}</h4>
                     <p className="text-sm font-bold text-slate-800 mt-0.5">Overdue</p>
                     <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-0.5">Need immediate action</p>
                   </div>
                 </div>
 
                 {/* 4. Invoices Due */}
-                <div className="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-sm flex items-center gap-4 hover:border-slate-300 transition duration-300">
+                <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex items-center gap-4 hover:border-slate-300 transition duration-300">
                   <div className="bg-emerald-50 text-emerald-600 p-3.5 rounded-2xl shrink-0">
-                    <span className="material-symbols-outlined text-2xl">description</span>
+                    <span aria-hidden="true" className="material-symbols-outlined text-2xl">description</span>
                   </div>
                   <div>
-                    <h4 className="text-3xl font-black text-slate-900 tracking-tight">{invoicesCount}</h4>
+                    <h4 className="text-2xl font-semibold tracking-tight text-slate-900">{invoicesCount}</h4>
                     <p className="text-sm font-bold text-slate-800 mt-0.5">Invoices Due</p>
                     <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-0.5">Totaling {formattedInvoiceAmount}</p>
                   </div>
@@ -887,10 +889,10 @@ export default function App() {
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
                 
                 {/* Column 1: Top Priorities */}
-                <div className="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-sm flex flex-col justify-between hover:border-slate-300 transition-all duration-300">
+                <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex flex-col justify-between hover:border-slate-300 transition-all duration-300">
                   <div>
                     <h3 className="text-base font-bold text-slate-900 flex items-center gap-2 mb-6 border-b border-slate-100 pb-3">
-                      <span className="material-symbols-outlined text-indigo-600 text-lg">notifications</span>
+                      <span aria-hidden="true" className="material-symbols-outlined text-indigo-600 text-lg">notifications</span>
                       Top Priorities
                     </h3>
                     
@@ -906,7 +908,7 @@ export default function App() {
                           >
                             <div className="flex items-center gap-3 min-w-0">
                               <div className="bg-slate-50 border border-slate-100 text-slate-400 p-2 rounded-xl flex items-center justify-center shrink-0">
-                                <span className="material-symbols-outlined text-sm">description</span>
+                                <span aria-hidden="true" className="material-symbols-outlined text-sm">description</span>
                               </div>
                               <div className="min-w-0">
                                 <h5 className="text-xs font-bold text-slate-900 truncate">{item.title}</h5>
@@ -914,7 +916,7 @@ export default function App() {
                               </div>
                             </div>
 
-                            <span className={`px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase shrink-0 ${
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase shrink-0 ${
                               (item.priority || '').toLowerCase() === 'high' ? 'bg-rose-50 text-rose-600' :
                               (item.priority || '').toLowerCase() === 'medium' ? 'bg-amber-50 text-amber-600' :
                               'bg-emerald-50 text-emerald-600'
@@ -924,9 +926,9 @@ export default function App() {
                           </div>
                         ))
                       ) : (
-                        <div className="flex flex-col items-center justify-center text-center p-8 bg-slate-50/50 border border-dashed border-slate-200 rounded-3xl py-12">
-                          <span className="material-symbols-outlined text-3xl text-emerald-500 mb-2">check_circle</span>
-                          <h4 className="text-xs font-black text-slate-800">All priorities resolved</h4>
+                        <div className="flex flex-col items-center justify-center text-center p-8 bg-slate-50/50 border border-dashed border-slate-200 rounded-2xl py-12">
+                          <span aria-hidden="true" className="material-symbols-outlined text-3xl text-emerald-500 mb-2">check_circle</span>
+                          <h4 className="text-xs font-bold text-slate-800">All priorities resolved</h4>
                           <p className="text-[10px] text-slate-400 mt-1 max-w-[180px] leading-relaxed">No high-priority task flags detected in processed emails.</p>
                         </div>
                       )}
@@ -938,15 +940,15 @@ export default function App() {
                     className="mt-6 w-full border border-slate-100 bg-slate-50 hover:bg-slate-100 text-slate-700 py-3 rounded-2xl text-xs font-bold transition flex items-center justify-center gap-1.5"
                   >
                     <span>View All Action Items</span>
-                    <span className="material-symbols-outlined text-xs">arrow_forward</span>
+                    <span aria-hidden="true" className="material-symbols-outlined text-xs">arrow_forward</span>
                   </button>
                 </div>
 
                 {/* Column 2: Today's Schedule */}
-                <div className="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-sm flex flex-col justify-between hover:border-slate-300 transition-all duration-300">
+                <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex flex-col justify-between hover:border-slate-300 transition-all duration-300">
                   <div>
                     <h3 className="text-base font-bold text-slate-900 flex items-center gap-2 mb-6 border-b border-slate-100 pb-3">
-                      <span className="material-symbols-outlined text-indigo-600 text-lg">calendar_today</span>
+                      <span aria-hidden="true" className="material-symbols-outlined text-indigo-600 text-lg">calendar_today</span>
                       Today's Schedule
                     </h3>
                     
@@ -960,25 +962,25 @@ export default function App() {
                             }}
                             className={`flex items-center gap-4 p-1 rounded-2xl transition ${item.email ? 'hover:bg-slate-50 cursor-pointer' : ''}`}
                           >
-                            <div className="text-xs font-extrabold text-slate-800 shrink-0 w-16">
+                            <div className="text-xs font-bold text-slate-800 shrink-0 w-16">
                               {item.time}
                             </div>
                             
                             <div className="flex items-center gap-2.5 min-w-0 bg-slate-50 border border-slate-100 rounded-2xl p-2.5 flex-1">
                               <div className="bg-indigo-50 text-indigo-600 p-1.5 rounded-xl shrink-0">
-                                <span className="material-symbols-outlined text-sm">{item.icon}</span>
+                                <span aria-hidden="true" className="material-symbols-outlined text-sm">{item.icon}</span>
                               </div>
                               <div className="min-w-0">
                                 <h5 className="text-xs font-bold text-slate-900 truncate">{item.title}</h5>
-                                <p className="text-[9px] text-slate-400 font-semibold uppercase mt-0.5">{item.duration}</p>
+                                <p className="text-[10px] text-slate-400 font-semibold uppercase mt-0.5">{item.duration}</p>
                               </div>
                             </div>
                           </div>
                         ))
                       ) : (
-                        <div className="flex flex-col items-center justify-center text-center p-8 bg-slate-50/50 border border-dashed border-slate-200 rounded-3xl py-12">
-                          <span className="material-symbols-outlined text-3xl text-indigo-400 mb-2">event_busy</span>
-                          <h4 className="text-xs font-black text-slate-800">Clear calendar today</h4>
+                        <div className="flex flex-col items-center justify-center text-center p-8 bg-slate-50/50 border border-dashed border-slate-200 rounded-2xl py-12">
+                          <span aria-hidden="true" className="material-symbols-outlined text-3xl text-indigo-400 mb-2">event_busy</span>
+                          <h4 className="text-xs font-bold text-slate-800">Clear calendar today</h4>
                           <p className="text-[10px] text-slate-400 mt-1 max-w-[180px] leading-relaxed">No upcoming meeting invites found in your inbox database.</p>
                         </div>
                       )}
@@ -990,15 +992,15 @@ export default function App() {
                     className="mt-6 w-full border border-slate-100 bg-slate-50 hover:bg-slate-100 text-slate-700 py-3 rounded-2xl text-xs font-bold transition flex items-center justify-center gap-1.5"
                   >
                     <span>View Calendar</span>
-                    <span className="material-symbols-outlined text-xs">arrow_forward</span>
+                    <span aria-hidden="true" className="material-symbols-outlined text-xs">arrow_forward</span>
                   </button>
                 </div>
 
                 {/* Column 3: Invoice Summary */}
-                <div className="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-sm flex flex-col justify-between hover:border-slate-300 transition-all duration-300">
+                <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex flex-col justify-between hover:border-slate-300 transition-all duration-300">
                   <div>
                     <h3 className="text-base font-bold text-slate-900 flex items-center gap-2 mb-6 border-b border-slate-100 pb-3">
-                      <span className="material-symbols-outlined text-indigo-600 text-lg">payments</span>
+                      <span aria-hidden="true" className="material-symbols-outlined text-indigo-600 text-lg">payments</span>
                       Invoice Summary
                     </h3>
                     
@@ -1006,7 +1008,7 @@ export default function App() {
                     <div className="flex items-center justify-between gap-4 bg-slate-50 border border-slate-100 p-4 rounded-2xl mb-6">
                       <div>
                         <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Total Due</span>
-                        <h4 className="text-xl font-black text-slate-900 mt-1">{formattedInvoiceAmount}</h4>
+                        <h4 className="text-xl font-bold text-slate-900 mt-1">{formattedInvoiceAmount}</h4>
                         
                         {/* Legend */}
                         <div className="mt-3 space-y-1.5">
@@ -1033,7 +1035,7 @@ export default function App() {
                             strokeDasharray="91" strokeDashoffset={totalInvoiceAmount > 0 ? 0 : 91} strokeLinecap="round" />
                         </svg>
                         <div className="absolute inset-0 flex items-center justify-center flex-col">
-                          <span className="text-[10px] font-black text-slate-900">{totalInvoiceAmount > 0 ? 100 : 0}%</span>
+                          <span className="text-[10px] font-bold text-slate-900">{totalInvoiceAmount > 0 ? 100 : 0}%</span>
                         </div>
                       </div>
                     </div>
@@ -1046,19 +1048,19 @@ export default function App() {
                             className="border border-slate-100 rounded-2xl p-3.5 bg-white flex items-center justify-between shadow-sm"
                           >
                             <div>
-                              <h5 className="text-xs font-black text-slate-900">{item.number}</h5>
-                              <p className="text-[9px] text-slate-400 font-semibold mt-0.5">{item.vendor} • {item.due_date}</p>
+                              <h5 className="text-xs font-bold text-slate-900">{item.number}</h5>
+                              <p className="text-[10px] text-slate-400 font-semibold mt-0.5">{item.vendor} • {item.due_date}</p>
                             </div>
                             <div className="text-right">
-                              <span className="text-xs font-black text-slate-900 block">${item.amount.toLocaleString('en-US', {minimumFractionDigits: 2})}</span>
-                              <span className="inline-block mt-1 px-2 py-0.5 rounded-full bg-rose-50 text-rose-600 text-[9px] font-extrabold">{item.status}</span>
+                              <span className="text-xs font-bold text-slate-900 block">${item.amount.toLocaleString('en-US', {minimumFractionDigits: 2})}</span>
+                              <span className="inline-block mt-1 px-2 py-0.5 rounded-full bg-rose-50 text-rose-600 text-[10px] font-bold">{item.status}</span>
                             </div>
                           </div>
                         ))
                       ) : (
-                        <div className="flex flex-col items-center justify-center text-center p-6 bg-slate-50/50 border border-dashed border-slate-200 rounded-3xl py-8">
-                          <span className="material-symbols-outlined text-3xl text-slate-300 mb-2">receipt_long</span>
-                          <h4 className="text-xs font-black text-slate-800">No invoices pending</h4>
+                        <div className="flex flex-col items-center justify-center text-center p-6 bg-slate-50/50 border border-dashed border-slate-200 rounded-2xl py-8">
+                          <span aria-hidden="true" className="material-symbols-outlined text-3xl text-slate-300 mb-2">receipt_long</span>
+                          <h4 className="text-xs font-bold text-slate-800">No invoices pending</h4>
                           <p className="text-[10px] text-slate-400 mt-1 max-w-[180px] leading-relaxed">Billing documents will automatically populate here when extracted.</p>
                         </div>
                       )}
@@ -1070,16 +1072,16 @@ export default function App() {
                     className="mt-6 w-full border border-slate-100 bg-slate-50 hover:bg-slate-100 text-slate-700 py-3 rounded-2xl text-xs font-bold transition flex items-center justify-center gap-1.5"
                   >
                     <span>View All Invoices</span>
-                    <span className="material-symbols-outlined text-xs">arrow_forward</span>
+                    <span aria-hidden="true" className="material-symbols-outlined text-xs">arrow_forward</span>
                   </button>
                 </div>
 
               </div>
 
               {/* Bottom AI Insights Section matching Reference Image layout */}
-              <div className="bg-indigo-50/20 border border-indigo-100/50 rounded-3xl p-6 shadow-sm">
+              <div className="bg-indigo-50/20 border border-indigo-100/50 rounded-2xl p-6 shadow-sm">
                 <h3 className="text-base font-bold text-slate-900 flex items-center gap-2 mb-4">
-                  <span className="material-symbols-outlined text-indigo-600 text-lg">auto_awesome</span>
+                  <span aria-hidden="true" className="material-symbols-outlined text-indigo-600 text-lg">auto_awesome</span>
                   AI Insights
                 </h3>
 
@@ -1088,7 +1090,7 @@ export default function App() {
                   {/* Insight 1 */}
                   <div className="bg-white border border-slate-100 rounded-2xl p-4 flex items-center gap-3 hover:border-slate-200 transition duration-300">
                     <div className="bg-indigo-50 text-indigo-600 p-2.5 rounded-xl shrink-0 flex items-center justify-center">
-                      <span className="material-symbols-outlined text-sm">trending_up</span>
+                      <span aria-hidden="true" className="material-symbols-outlined text-sm">trending_up</span>
                     </div>
                     <p className="text-xs text-slate-600 leading-normal">
                       You have <strong className="text-slate-900">{highPriorityCount} high-priority</strong> items that need your attention today.
@@ -1098,7 +1100,7 @@ export default function App() {
                   {/* Insight 2 */}
                   <div className="bg-white border border-slate-100 rounded-2xl p-4 flex items-center gap-3 hover:border-slate-200 transition duration-300">
                     <div className="bg-indigo-50 text-indigo-600 p-2.5 rounded-xl shrink-0 flex items-center justify-center">
-                      <span className="material-symbols-outlined text-sm">schedule</span>
+                      <span aria-hidden="true" className="material-symbols-outlined text-sm">schedule</span>
                     </div>
                     <p className="text-xs text-slate-600 leading-normal">
                       You have <strong className="text-slate-900">{dueTodayCount} deadlines</strong> registered for today. Keep up the pace!
@@ -1108,7 +1110,7 @@ export default function App() {
                   {/* Insight 3 */}
                   <div className="bg-white border border-slate-100 rounded-2xl p-4 flex items-center gap-3 hover:border-slate-200 transition duration-300">
                     <div className="bg-indigo-50 text-indigo-600 p-2.5 rounded-xl shrink-0 flex items-center justify-center">
-                      <span className="material-symbols-outlined text-sm">account_balance_wallet</span>
+                      <span aria-hidden="true" className="material-symbols-outlined text-sm">account_balance_wallet</span>
                     </div>
                     <p className="text-xs text-slate-600 leading-normal">
                       <strong className="text-slate-900">{formattedInvoiceAmount}</strong> outstanding across <strong className="text-slate-900">{invoicesCount} invoices</strong> this week.
@@ -1118,7 +1120,7 @@ export default function App() {
                   {/* Insight 4 */}
                   <div className="bg-white border border-slate-100 rounded-2xl p-4 flex items-center gap-3 hover:border-slate-200 transition duration-300">
                     <div className="bg-indigo-50 text-indigo-600 p-2.5 rounded-xl shrink-0 flex items-center justify-center">
-                      <span className="material-symbols-outlined text-sm">auto_awesome</span>
+                      <span aria-hidden="true" className="material-symbols-outlined text-sm">auto_awesome</span>
                     </div>
                     <p className="text-xs text-slate-600 leading-normal">
                       <strong className="text-slate-900">{actionItemsCount} work signals</strong> are actively managed by the system.
@@ -1135,9 +1137,9 @@ export default function App() {
                     }}
                     className="bg-indigo-50/80 border border-indigo-100/50 hover:bg-indigo-100 hover:border-indigo-200 text-indigo-700 px-6 py-3.5 rounded-full text-xs font-bold shadow-sm transition flex items-center justify-center gap-2 group"
                   >
-                    <span className="material-symbols-outlined text-xs group-hover:scale-110 transition-transform">auto_awesome</span>
+                    <span aria-hidden="true" className="material-symbols-outlined text-xs group-hover:scale-110 transition-transform">auto_awesome</span>
                     <span>Ask InBoxIQ anything...</span>
-                    <span className="material-symbols-outlined text-xs group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                    <span aria-hidden="true" className="material-symbols-outlined text-xs group-hover:translate-x-1 transition-transform">arrow_forward</span>
                   </button>
                 </div>
               </div>
@@ -1154,10 +1156,10 @@ export default function App() {
 
               <div className="grid gap-6 md:grid-cols-2">
                 {/* Autopilot Risk Control Threshold Slider */}
-                <div className="rounded-3xl bg-white p-8 border border-slate-200 shadow-sm flex flex-col justify-between">
+                <div className="rounded-2xl bg-white p-8 border border-slate-200 shadow-sm flex flex-col justify-between">
                   <div>
                     <h3 className="text-2xl font-bold text-slate-900 mb-3 flex items-center gap-2">
-                      <span className="material-symbols-outlined text-rose-600">security</span>
+                      <span aria-hidden="true" className="material-symbols-outlined text-rose-600">security</span>
                       AI Risk Guardrails
                     </h3>
                     <p className="text-sm text-slate-500 mb-6">
@@ -1167,7 +1169,7 @@ export default function App() {
                     <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 mb-6">
                       <div className="flex items-center justify-between mb-4">
                         <span className="text-xs font-semibold uppercase text-slate-400">Confidence Threshold Limit</span>
-                        <span className="text-xl font-black text-primary">{sliderThreshold}%</span>
+                        <span className="text-xl font-bold text-primary">{sliderThreshold}%</span>
                       </div>
                       <input
                         type="range"
@@ -1203,10 +1205,10 @@ export default function App() {
                 </div>
 
                 {/* Worker Automation */}
-                <div className="rounded-3xl bg-white p-8 border border-slate-200 shadow-sm flex flex-col justify-between">
+                <div className="rounded-2xl bg-white p-8 border border-slate-200 shadow-sm flex flex-col justify-between">
                   <div>
                     <h3 className="text-2xl font-bold text-slate-900 mb-3 flex items-center gap-2">
-                      <span className="material-symbols-outlined text-primary">robot_2</span>
+                      <span aria-hidden="true" className="material-symbols-outlined text-primary">robot_2</span>
                       Automation Settings
                     </h3>
                     <p className="text-sm text-slate-500 mb-6">
@@ -1262,6 +1264,8 @@ export default function App() {
 
         </div>
       </main>
+
+      {composeOpen && <ComposeModal onClose={() => setComposeOpen(false)} />}
 
       <AskModal
         open={askOpen}

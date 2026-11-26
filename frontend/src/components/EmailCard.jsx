@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 
 export default function EmailCard({
   title,
@@ -50,7 +50,7 @@ export default function EmailCard({
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex items-center gap-4">
           <div className={`w-14 h-14 rounded-3xl ${iconBg} flex items-center justify-center ${iconColor}`}>
-            <span className="material-symbols-outlined text-3xl">{icon}</span>
+            <span aria-hidden="true" className="material-symbols-outlined text-3xl">{icon}</span>
           </div>
           <div className="flex-1">
             <h3 className="text-xl font-bold text-primary">
@@ -102,7 +102,7 @@ export default function EmailCard({
         ))}
         {isHovered && (
           <button className="rounded-full border border-slate-200 px-3 py-2 text-slate-500 hover:text-primary transition-colors">
-            <span className="material-symbols-outlined">more_horiz</span>
+            <span aria-hidden="true" className="material-symbols-outlined">more_horiz</span>
           </button>
         )}
       </div>

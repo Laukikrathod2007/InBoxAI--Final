@@ -62,7 +62,15 @@ def main():
         from src.llm_client import llm_client
         if not llm_client.local_available and not args.allow_cloud:
             raise SystemExit("Ollama is not reachable. Refusing to use a cloud model without --allow-cloud.")
-        preds = [llm_predict(r) for r in rows]
+        import time
+        preds, lat = [], []
+        for r in rows:
+            t0 = time.perf_counter()
+            preds.append(llm_predict(r))
+            lat.append((time.perf_counter() - t0) * 1000)
+        lat.sort()
+        print(f"model={llm_client.local_model} latency_ms p50={lat[len(lat)//2]:.0f} "
+              f"p95={lat[min(len(lat)-1, int(0.95*len(lat)))]:.0f}")
     else:
         preds = [rules_predict(r) for r in rows]
     results = {
