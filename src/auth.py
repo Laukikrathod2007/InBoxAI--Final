@@ -40,5 +40,8 @@ LOOPBACK = {"127.0.0.1", "::1", "localhost"} | \
 
 
 def is_loopback(request: Request) -> bool:
+    # Public demo only (synthetic data, no Gmail): any visitor may get a session.
+    if os.getenv("INBOXIQ_PUBLIC_DEMO") == "1":
+        return True
     host = request.client.host if request.client else ""
     return host in LOOPBACK

@@ -19,7 +19,11 @@ COPY eval/data/synthetic_mailbox.jsonl ./eval/data/synthetic_mailbox.jsonl
 COPY scripts/demo_server.py ./scripts/demo_server.py
 COPY --from=ui /ui/dist ./frontend/dist
 
-ENV DEMO_HOST=0.0.0.0 DEMO_PORT=7860 PYTHONUNBUFFERED=1
+# INBOXIQ_PUBLIC_DEMO lets any visitor use the demo. Safe only because this image
+# has synthetic mail and no Gmail access. Never set it for the real app.
+# ALLOWED_HOSTS="*" accepts the hosting domain (e.g. *.hf.space).
+ENV DEMO_HOST=0.0.0.0 DEMO_PORT=7860 PYTHONUNBUFFERED=1 \
+    INBOXIQ_PUBLIC_DEMO=1 ALLOWED_HOSTS="*" CORS_ORIGINS="*"
 EXPOSE 7860
 # Runs as a non-root user (Hugging Face Spaces requires uid 1000).
 RUN useradd -m -u 1000 demo

@@ -91,3 +91,14 @@ def test_bounce_mail_is_not_hidden_by_rules():
 def test_clean_email_keeps_thanks_sentence():
     from src.brain import clean_email
     assert "send the invoice" in clean_email("Hi,\nThanks, can you send the invoice by Friday?")
+
+
+def test_public_demo_flag_is_off_by_default(monkeypatch):
+    """The real app must never hand the token to non-local visitors."""
+    from types import SimpleNamespace
+    from src.auth import is_loopback
+    monkeypatch.delenv("INBOXIQ_PUBLIC_DEMO", raising=False)
+    outsider = SimpleNamespace(client=SimpleNamespace(host="203.0.113.7"))
+    assert is_loopback(outsider) is False
+    monkeypatch.setenv("INBOXIQ_PUBLIC_DEMO", "1")
+    assert is_loopback(outsider) is True
