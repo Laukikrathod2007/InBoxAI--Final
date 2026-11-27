@@ -8,7 +8,14 @@ from pathlib import Path
 from .worker import Worker
 from .api_routes import router as api_router
 
-app = FastAPI(title="InBoxIQ API", version="1.0")
+# API docs list every endpoint; only expose them when INBOXIQ_DEBUG=1.
+_DEBUG = os.getenv("INBOXIQ_DEBUG") == "1"
+app = FastAPI(
+    title="InBoxIQ API", version="1.0",
+    docs_url="/docs" if _DEBUG else None,
+    redoc_url="/redoc" if _DEBUG else None,
+    openapi_url="/openapi.json" if _DEBUG else None,
+)
 
 # Add CORS middleware
 app.add_middleware(
@@ -45,7 +52,14 @@ class OriginGuard(BaseHTTPMiddleware):
         return await call_next(request)
 
 
+from .security import RateLimit, SecurityHeaders
+
+# Starlette runs middleware in REVERSE order of add_middleware. Effective order:
+# TrustedHost -> SecurityHeaders -> OriginGuard -> RateLimit -> CORS -> app.
+# OriginGuard runs before RateLimit, so cross-site requests cannot use up the limit.
+app.add_middleware(RateLimit)
 app.add_middleware(OriginGuard)
+app.add_middleware(SecurityHeaders)
 # Rejects DNS-rebinding: requests must use a known Host header.
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=ALLOWED_HOSTS)
 

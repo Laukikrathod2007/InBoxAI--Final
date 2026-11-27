@@ -3,10 +3,9 @@
   python scripts/gmail_login.py
 
 Opens Google's sign-in page in your browser. You sign in there; this script
-never sees your password. It saves the new token to token.json (gitignored).
-An old, expired token is kept as token.expired.json (also gitignored).
+never sees your password. The new token is saved in the Windows Credential
+Manager (falls back to token.json only if no credential vault exists).
 """
-import shutil
 import sys
 from pathlib import Path
 
@@ -20,11 +19,11 @@ TOKEN = ROOT / "token.json"
 if not CLIENT.exists():
     sys.exit("gmail_credentials.json not found in the project folder.")
 
-if TOKEN.exists():
-    shutil.copy2(TOKEN, ROOT / "token.expired.json")
+sys.path.insert(0, str(ROOT))
+from src import token_store  # noqa: E402
 
 flow = InstalledAppFlow.from_client_secrets_file(str(CLIENT), SCOPES)
 print("A browser window is opening. Sign in to Google and allow access.")
 creds = flow.run_local_server(port=0, open_browser=True)
-TOKEN.write_text(creds.to_json(), encoding="utf-8")
-print("Gmail connected. token.json saved.")
+where = token_store.save(creds.to_json(), str(TOKEN))
+print(f"Gmail connected. Login saved in the {where}.")

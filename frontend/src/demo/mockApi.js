@@ -81,6 +81,7 @@ function respond(method, path, params, body) {
     return { updated: hits.length };
   }
   if (path.startsWith('/api/autopilot/undo/')) return { status: 'undone' };
+  if (path === '/api/send/confirm') return { confirm_code: 'demo' };
   if (path === '/api/compose-draft') return DRAFT(body.intent || '');
   if (path === '/api/send') return { status: 'success', message_id: 'demo' };
   if (path === '/api/chat') {

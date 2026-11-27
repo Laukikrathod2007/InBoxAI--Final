@@ -34,3 +34,11 @@ def _fresh_token_headers(request):
     mod = request.module
     if hasattr(mod, "H"):
         mod.H = {"X-InBoxIQ-Token": get_token()}
+
+
+@pytest.fixture(autouse=True)
+def _fresh_rate_limits():
+    """Each test starts with empty rate-limit counters (they are shared in-process)."""
+    from src import security
+    security.RateLimit.reset_all()
+    yield

@@ -1,4 +1,4 @@
-import os
+﻿import os
 import base64
 import logging
 from google.auth.transport.requests import Request
@@ -6,6 +6,8 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from .config import settings
+from . import token_store
+import json
 
 logger = logging.getLogger(__name__)
 
@@ -38,12 +40,14 @@ class GmailReader:
         Returns credentials object.
         """
         creds = None
-        # The file token.json stores the user's access and refresh tokens.
-        if os.path.exists(settings.GMAIL_TOKEN_FILE):
+        # The token lives in the OS credential vault (Windows Credential Manager);
+        # an old token.json is migrated into the vault and deleted on first load.
+        raw = token_store.load(settings.GMAIL_TOKEN_FILE)
+        if raw:
             try:
-                creds = Credentials.from_authorized_user_file(settings.GMAIL_TOKEN_FILE, SCOPES)
+                creds = Credentials.from_authorized_user_info(json.loads(raw), SCOPES)
             except Exception as e:
-                logger.error(f"Error loading credentials from token file: {e}")
+                logger.error(f"Error loading stored Gmail credentials: {e}")
                 creds = None
         
         # If there are no (valid) credentials available, let the user log in.
@@ -53,13 +57,15 @@ class GmailReader:
                     logger.info("Attempting to refresh Gmail token...")
                     creds.refresh(Request())
                 except Exception as e:
-                    logger.error(f"Token refresh failed: {e}. Re-authenticating...")
-                    if os.path.exists(settings.GMAIL_TOKEN_FILE):
-                        try:
-                            os.remove(settings.GMAIL_TOKEN_FILE)
-                        except Exception:
-                            pass
-                    creds = None
+                    # Only a revoked/expired grant means the token is dead. Network
+                    # errors and timeouts must not delete a working login.
+                    from google.auth.exceptions import RefreshError
+                    if isinstance(e, RefreshError) and "invalid_grant" in str(e):
+                        logger.error("Gmail login expired or was revoked. Run: python scripts/gmail_login.py")
+                        token_store.clear(settings.GMAIL_TOKEN_FILE)
+                    else:
+                        logger.error(f"Token refresh failed ({type(e).__name__}); keeping the stored login.")
+                    raise
             
             if not creds:
                 logger.info("Starting Gmail OAuth flow...")
@@ -67,11 +73,10 @@ class GmailReader:
                     settings.GMAIL_CLIENT_CONFIG, SCOPES)
                 creds = flow.run_local_server(port=0)
             
-            # Save the credentials for the next run
+            # Save to the OS credential vault (plain file only if no vault).
             try:
-                with open(settings.GMAIL_TOKEN_FILE, 'w') as token:
-                    token.write(creds.to_json())
-                logger.info("Gmail credentials saved successfully.")
+                where = token_store.save(creds.to_json(), settings.GMAIL_TOKEN_FILE)
+                logger.info(f"Gmail credentials saved ({where}).")
             except Exception as e:
                 logger.error(f"Failed to save credentials token: {e}")
         

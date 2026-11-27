@@ -1,4 +1,4 @@
-"""Read-only: fetch Gmail labels + a few headers for the labelled real emails.
+﻿"""Read-only: fetch Gmail labels + a few headers for the labelled real emails.
 
   python -m eval.fetch_meta
 
@@ -22,10 +22,11 @@ HEADERS = ["From", "List-Unsubscribe", "List-Id", "Precedence", "Auto-Submitted"
 
 
 def _service():
-    tok = Path("token.json")
-    if not tok.exists():
-        sys.exit("token.json not found. Run the app once to connect Gmail.")
-    creds = Credentials.from_authorized_user_file(str(tok))
+    from src import token_store
+    raw = token_store.load("token.json")
+    if not raw:
+        sys.exit("No Gmail login found. Run: python scripts/gmail_login.py")
+    creds = Credentials.from_authorized_user_info(json.loads(raw))
     if not creds.valid:
         if creds.expired and creds.refresh_token:
             creds.refresh(Request())  # in memory only; token.json is not rewritten

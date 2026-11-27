@@ -53,6 +53,7 @@ class SendRequest(BaseModel):
     subject: str
     body: str
     thread_id: Optional[str] = None
+    confirm_code: Optional[str] = None
 
 class OverrideRequest(BaseModel):
     email_id: str
@@ -107,9 +108,26 @@ def post_compose(req: ComposeRequest, db: Session = Depends(get_db)):
         logger.error(f"Drafting logic failed: {str(e)}")
         raise HTTPException(status_code=500, detail="AI drafting unavailable locally.")
 
+class SendConfirmRequest(BaseModel):
+    recipient: str
+    subject: str
+    body: str
+    thread_id: Optional[str] = None
+
+
+@router.post("/send/confirm")
+def post_send_confirm(req: SendConfirmRequest):
+    """Step 1 of sending: get a one-time code bound to this exact message and thread."""
+    from .send_guard import issue
+    return {"confirm_code": issue(req.recipient, req.subject, req.body, req.thread_id)}
+
+
 @router.post("/send")
 def post_send(req: SendRequest):
-    """ Send the finalized email via Gmail API """
+    """Step 2: send, only with a valid, unused code for this exact message and thread."""
+    from .send_guard import consume
+    if not consume(req.confirm_code or "", req.recipient, req.subject, req.body, req.thread_id):
+        raise HTTPException(status_code=403, detail="Send not confirmed. Review the draft and press Send again.")
     msg_id = gmail_reader.send_email(req.recipient, req.subject, req.body, req.thread_id)
     if msg_id:
         return {"status": "success", "message_id": msg_id}

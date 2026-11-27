@@ -16,6 +16,8 @@ jobs:
       - run: pytest -q
       - name: Eval regression (no network, no secrets)
         run: python -m eval.run_eval --name ci_rules
+      - name: Dependency vulnerability scan
+        run: pip install pip-audit && pip-audit -r requirements.txt --progress-spinner off
 
   frontend:
     runs-on: ubuntu-latest
@@ -32,3 +34,5 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run build
+      - name: Dependency vulnerability scan (runtime deps)
+        run: npm audit --omit=dev --audit-level=high

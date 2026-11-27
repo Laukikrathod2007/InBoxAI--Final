@@ -43,7 +43,10 @@ function ComposeModal({ onClose, threadId = null, initialRecipient = '', initial
     }
     setSending(true);
     try {
-      await axios.post(`${API_BASE}/send`, { recipient: recipient.trim(), subject: draft.subject, body: draft.body, thread_id: threadId });
+      const msg = { recipient: recipient.trim(), subject: draft.subject, body: draft.body, thread_id: threadId };
+      // Two steps: a one-time code bound to this exact message and thread, then the send.
+      const { data } = await axios.post(`${API_BASE}/send/confirm`, msg);
+      await axios.post(`${API_BASE}/send`, { ...msg, confirm_code: data.confirm_code });
       toast.success('Email sent.');
       onClose();
     } catch {

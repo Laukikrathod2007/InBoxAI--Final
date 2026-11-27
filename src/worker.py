@@ -125,11 +125,20 @@ class Worker:
 
     def run_forever(self):
         logger.info("InBoxIQ Worker started. Polling for emails...")
+        last_purge = 0.0
         while not self._stop_event.is_set():
             try:
                 self.process_cycle()
             except Exception as e:
                 logger.error("Cycle Error: %s", str(e))
+            # Data minimisation: erase old email bodies about once an hour.
+            if time.time() - last_purge > 3600:
+                try:
+                    from .retention import purge_old_bodies
+                    purge_old_bodies()
+                except Exception as e:
+                    logger.error("Retention purge failed: %s", str(e))
+                last_purge = time.time()
             self._stop_event.wait(settings.POLLING_INTERVAL_SECONDS)
 
     def start_auto(self):

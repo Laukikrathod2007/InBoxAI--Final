@@ -290,7 +290,11 @@ class LLMClient:
                 # Support direct JSON or wrapped JSON blocks
                 return json.loads(clean_text)
             except Exception as e:
-                logger.warning(f"JSON Parsing Attempt {i+1} failed: {str(e)}. Raw text: {repr(raw_text)}")
+                # Never log model output: it can contain email text. Length + short hash only.
+                import hashlib
+                digest = hashlib.sha256(raw_text.encode("utf-8", "ignore")).hexdigest()[:12]
+                logger.warning(f"JSON parsing attempt {i+1} failed: {type(e).__name__}; "
+                               f"output length={len(raw_text)} sha256={digest}")
                 if i == retries - 1:
                     return {}  # unparseable after retries: needs human review
                 continue
