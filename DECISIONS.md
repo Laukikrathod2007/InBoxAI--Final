@@ -66,3 +66,13 @@ Measured on the 50 hand-labelled real emails (python -m eval.signals):
 - List-Unsubscribe header: 94.1% of noise, 80.0% of needs-action mail (most real senders now add it).
 Decision: Do not use these signals to hide mail. Keep the current filter (0.0% needs-action lost).
 Consequence: The noise problem needs a per-sender approach instead, for example hiding a sender only after the user mutes them, which needs a few weeks of real use to measure.
+
+## 2026-11-26: Free public demo runs the real rules in the browser
+Context: Hugging Face now charges for Docker Spaces. A static demo with canned data looks hardcoded.
+Decision: Two parts. (1) A browser-only UI preview where the 80 sample emails were sorted by the real rule filter at build time. (2) A "test the real filter" page that loads the unchanged src/rules.py into Pyodide, so visitors can paste their own email.
+Consequence: Only the rule step is live in the demo; the LLM step is shown in docs/VIDEO_SCRIPT.md. Bug found by browser QA: the demo's fetch override blocked Pyodide's .wasm download; it now only intercepts the app's own API paths.
+
+## 2026-11-26: Learn noise senders from the user's Mute clicks
+Context: Gmail's tabs proved unsafe (see above), but hiding only 17.6% of noise is not useful enough.
+Decision: src/sender_memory.py hides a sender after the user mutes them twice, unless they have since marked one as not noise, and never inside an active thread.
+Consequence: Needs weeks of real use before it can be measured. Tested with unit tests only (tests/test_sender_memory.py).

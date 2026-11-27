@@ -48,3 +48,5 @@ token.dummy.json
 
 # Generated Hugging Face static Space
 hf-space/
+eval/data/real_export_fresh.csv
+eval/data/real_labels_fresh.csv

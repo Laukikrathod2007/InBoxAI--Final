@@ -74,6 +74,11 @@ Gmail API (OAuth 2.0)
 
 ---
 
+## Live demo
+
+- **UI preview:** https://huggingface.co/spaces/Laukik007/inboxiq runs in your browser on 80 made-up emails. Their sorting was done by the real rules; the AI model is not part of the demo.
+- **Test the real filter:** https://huggingface.co/spaces/Laukik007/inboxiq#/try runs the unchanged `src/rules.py` in your browser (Pyodide). Paste any email and see the decision. Nothing is sent anywhere.
+- Rebuild it with `powershell -File scripts/make_space.ps1` (output: `hf-space/`).
 ## Results
 
 ### Real mail (my own inbox, 50 emails, labelled by hand)

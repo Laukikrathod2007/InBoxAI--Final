@@ -14,6 +14,8 @@ Pop-Location
 $out = Join-Path $root "hf-space"
 if (Test-Path $out) { Remove-Item -Recurse -Force $out }
 Copy-Item -Recurse frontend/dist-demo $out
+# The real filter code, unchanged, for the "try your own email" page.
+Copy-Item src/rules.py (Join-Path $out "rules.py")
 
 # README is written by Python so the YAML header is clean UTF-8 with no BOM.
 python -c "import pathlib,sys; pathlib.Path(sys.argv[1]).write_text(open('scripts/space_readme.md',encoding='utf-8').read(),encoding='utf-8')" (Join-Path $out "README.md")

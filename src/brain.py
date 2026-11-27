@@ -143,6 +143,15 @@ class LangGraphBrain:
             state.get('attachments', []),
             state.get('thread_history', '')
         )
+        if not bucket_data:
+            # Senders the user muted at least twice (and never un-muted) are noise.
+            # An active thread always goes to the model instead.
+            try:
+                from .sender_memory import learned_noise
+                if not state.get('thread_history', '').strip():
+                    bucket_data = learned_noise(state.get('sender', ''))
+            except Exception as e:
+                logger.warning(f"Sender memory unavailable: {e}")
         if bucket_data:
             return {
                 "is_noise": bucket_data["is_noise"], 

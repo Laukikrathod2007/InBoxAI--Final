@@ -29,14 +29,34 @@ def _labels():
             if (r.get("label") or "").strip().lower() in ("noise", "needs_action", "fyi")}
 
 
-def export(n=50):
-    rows = _db().execute("select id, sender, subject, status from emails "
-                         "order by received_at desc limit ?", (n,)).fetchall()
-    with open(D / "real_export.csv", "w", newline="", encoding="utf-8") as f:
+def export(n=50, fresh=False):
+    """fresh=True skips emails already in real_labels.csv and writes real_export_fresh.csv."""
+    done = set(_labels()) if fresh and (D / "real_labels.csv").exists() else set()
+    rows = [r for r in _db().execute("select id, sender, subject, status from emails "
+                                     "order by received_at desc").fetchall() if r[0] not in done][:n]
+    name = "real_export_fresh.csv" if fresh else "real_export.csv"
+    with open(D / name, "w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
         w.writerow(["id", "sender", "subject", "app_decision", "label"])
         w.writerows([*r, ""] for r in rows)
-    print(f"wrote {len(rows)} rows; fill the label column, save as real_labels.csv")
+    target = "real_labels_fresh.csv" if fresh else "real_labels.csv"
+    print(f"wrote {len(rows)} rows to {name}; fill the label column, save as {target}")
+
+
+def score_fresh():
+    """Score the CURRENT rules on emails that were never used to tune them."""
+    global _labels
+    orig = _labels
+
+    def fresh_labels():
+        rows = csv.DictReader(open(D / "real_labels_fresh.csv", encoding="utf-8-sig"))
+        return {r["id"]: r["label"].strip().lower() for r in rows
+                if (r.get("label") or "").strip().lower() in ("noise", "needs_action", "fyi")}
+    _labels = fresh_labels
+    try:
+        rules()
+    finally:
+        _labels = orig
 
 
 def _report(name, rows, preds):
@@ -95,4 +115,5 @@ def pipeline():
 
 if __name__ == "__main__":
     cmd = sys.argv[1] if len(sys.argv) > 1 else "export"
-    {"export": export, "score": stored, "rules": rules, "pipeline": pipeline}[cmd]()
+    {"export": export, "export-fresh": lambda: export(fresh=True), "score": stored,
+     "rules": rules, "pipeline": pipeline, "score-fresh": score_fresh}[cmd]()

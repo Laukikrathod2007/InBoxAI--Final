@@ -406,8 +406,9 @@ export default function App() {
     <div className="min-h-screen w-full bg-slate-50 text-slate-900 antialiased">
       <Toaster position="top-center" richColors theme="light" />
       {import.meta.env.VITE_DEMO === '1' && (
-        <div className="fixed bottom-4 left-1/2 z-[60] -translate-x-1/2 rounded-full bg-slate-900 px-4 py-2 text-xs font-medium text-white shadow-lg">
-          Demo with 80 made-up emails. Runs in your browser, nothing is sent.
+        <div className="fixed bottom-4 left-1/2 z-[60] flex -translate-x-1/2 items-center gap-3 rounded-full bg-slate-900 py-2 pl-4 pr-2 text-xs font-medium text-white shadow-lg">
+          <span>UI preview on 80 made-up emails. Sorting was done by the real rules; the AI model runs only on a user&apos;s laptop.</span>
+          <a href="#/try" className="shrink-0 rounded-full bg-white px-3 py-1 font-semibold text-slate-900 hover:bg-slate-100">Test the real filter</a>
         </div>
       )}
 

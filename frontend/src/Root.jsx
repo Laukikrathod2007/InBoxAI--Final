@@ -1,17 +1,23 @@
-import { lazy, Suspense, useEffect, useState } from 'react';
+﻿import { lazy, Suspense, useEffect, useState } from 'react';
 import Landing from './landing/Landing';
 
 // The dashboard (and its API calls) only loads when the user opens it.
 const App = lazy(() => import('./App'));
+const TryIt = lazy(() => import('./demo/TryIt'));
 
-const route = () => (window.location.hash.startsWith('#/app') ? 'app' : 'landing');
+const route = () => {
+  const h = window.location.hash;
+  if (h.startsWith('#/app')) return 'app';
+  if (h.startsWith('#/try')) return 'try';
+  return 'landing';
+};
 
 export default function Root() {
   const [page, setPage] = useState(route);
   useEffect(() => {
     const onHash = () => {
       setPage(route());
-      if (!window.location.hash.includes('#/app')) {
+      if (!/#\/(app|try)/.test(window.location.hash)) {
         const id = window.location.hash.slice(1);
         if (id && !id.startsWith('/')) document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
       }
@@ -26,6 +32,13 @@ export default function Root() {
   }, [page]);
 
   if (page === 'landing') return <Landing />;
+  if (page === 'try') {
+    return (
+      <Suspense fallback={<div className="grid min-h-screen place-items-center text-sm text-slate-500">Loading…</div>}>
+        <TryIt />
+      </Suspense>
+    );
+  }
   return (
     <Suspense fallback={<div className="grid min-h-screen place-items-center text-sm text-slate-500">Loading dashboard…</div>}>
       <App />

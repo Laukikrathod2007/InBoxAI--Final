@@ -101,8 +101,14 @@ export function installMockApi() {
     await new Promise((r) => setTimeout(r, 120)); // feel like a real request
     return { data, status: 200, statusText: 'OK', headers: {}, config, request: {} };
   };
-  window.fetch = async (input) => {
-    const path = new URL(typeof input === 'string' ? input : input.url, window.location.origin).pathname;
+  // Only intercept this app's own API paths. Everything else (Pyodide's .wasm,
+  // fonts, rules.py) must reach the real network.
+  const realFetch = window.fetch.bind(window);
+  window.fetch = async (input, init) => {
+    const url = new URL(typeof input === 'string' ? input : input.url, window.location.origin);
+    const isApi = url.origin === window.location.origin && /\/(api|automation|process-now|health)(\/|$)/.test(url.pathname);
+    if (!isApi) return realFetch(input, init);
+    const path = url.pathname.replace(/^.*?(?=\/(api|automation|process-now|health))/, '');
     const data = respond('get', path, {}, {});
     return new Response(JSON.stringify(data ?? {}), { status: data ? 200 : 404, headers: { 'Content-Type': 'application/json' } });
   };

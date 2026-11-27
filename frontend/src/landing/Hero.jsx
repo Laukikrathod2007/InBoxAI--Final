@@ -85,7 +85,7 @@ export default function Hero() {
             <Github size={16} aria-hidden="true" /> Star on GitHub
           </a>
         </div>
-        <p className="mt-4 text-xs text-slate-500">Free · Open source · Works offline with Ollama</p>
+        <p className="mt-4 text-xs text-slate-500">Free · Open source · Works offline with Ollama · <a href="#/try" className="font-semibold text-violet-700 underline">Test the real filter on your own email</a></p>
 
         {/* 3D card zoom: the product window flattens and grows as you scroll */}
         <div ref={stage} className="relative mx-auto mt-16 max-w-5xl text-left [perspective:1400px]">
