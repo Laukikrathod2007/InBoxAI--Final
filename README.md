@@ -1,345 +1,225 @@
-﻿# InBoxIQ — AI-Native Work Operating System
+﻿<div align="center">
 
-<div align="center">
+<img src="frontend/public/logo.png" alt="InBoxIQ" width="84" />
+
+# InBoxIQ
+
+### The Gmail assistant that asks before it acts.
+
+An AI inbox sorter that runs on your own laptop, never hides mail on a guess, and can undo everything it does.
 
 [![CI](https://github.com/Laukikrathod2007/InBoxAI--Final/actions/workflows/ci.yml/badge.svg)](https://github.com/Laukikrathod2007/InBoxAI--Final/actions/workflows/ci.yml)
-![Version](https://img.shields.io/badge/Version-v1.1.0-6366f1?style=for-the-badge)
-![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)
-![React](https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=black)
-![FastAPI](https://img.shields.io/badge/FastAPI-0.109-009688?style=for-the-badge&logo=fastapi&logoColor=white)
-![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
+![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=flat-square&logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.165-009688?style=flat-square&logo=fastapi&logoColor=white)
+![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=black)
+![LangGraph](https://img.shields.io/badge/LangGraph-agent_graph-1C3C3C?style=flat-square)
+![Ollama](https://img.shields.io/badge/Ollama-local_LLM-000000?style=flat-square)
+![License](https://img.shields.io/badge/License-MIT-22c55e?style=flat-square)
 
-**Stop reading emails. Start acting on them.**
+**Built by [Laukik Rathod](https://github.com/Laukikrathod2007)**
 
-InBoxIQ is a privacy-first AI Work OS built around Gmail. It automatically reads, classifies, and prioritizes your inbox using local or cloud LLMs — turning raw emails into actionable work items on an intelligent dashboard.
-
-[Features](#-features) • [Architecture](#-architecture) • [Quick Start](#-quick-start) • [API Reference](#-api-reference) • [Configuration](#-configuration)
+[**Try it in your browser**](https://huggingface.co/spaces/Laukik007/inboxiq#/try) · [How it works](#how-it-works) · [Results](#results) · [Quick start](#quick-start) · [Security](SECURITY.md) · [Decisions](DECISIONS.md)
 
 </div>
 
 ---
 
-## ✨ Features
+## The story in 30 seconds
 
-| Feature | Description |
-|---|---|
-| **AI Email Pipeline** | 6-stage LangGraph brain: Ingest → Rule Filter → PDF Extract → Classify → Decide → Store |
-| **Intelligent Dashboard** | 3-column Work OS UI — Sidebar, Email Feed, Intelligence Panel |
-| **Compose by Intent** | Describe what you want to say, AI drafts the full email |
-| **Inbox Q&A** | Chat with your inbox in natural language |
-| **PDF Intelligence** | Automatically extracts invoices, resumes, contracts from attachments |
-| **Autopilot Mode** | Auto-archives noise, applies Gmail labels, marks emails read |
-| **Daily Briefing** | AI-generated executive summary of your pending work |
-| **Local-first** | Runs on your machine with Ollama (Llama 3). Gemini is an optional fallback and only used if `GEMINI_API_KEY` is set; then email text can leave your machine. |
-| **Gemini Fallback** | Optional Google Gemini API as a cloud fallback |
-| **Noise Control** | Deterministic rule engine + LLM spam filter |
+I built the first version at the end of my second year. It looked great in a demo. Then I measured it on 50 of my own real emails, and it was **hiding 57.6% of the important ones**.
+
+So I stopped adding features and fixed the system instead. I rebuilt the filter around one rule: **never hide mail on a guess.** Then I measured again.
+
+| | Before | After |
+|---|---|---|
+| Important mail wrongly hidden | **57.6%** | **0.0%** |
+| Needs-action mail hidden | 66.7% | 0.0% |
+
+The sample is small (50 emails), and I say so below. The numbers are real, the method is in the repo, and you can rerun it on your own mail.
 
 ---
 
-## 🏗 Architecture
+## What it does
 
-```
-Gmail API (OAuth 2.0)
-        │
-        ▼
-┌─────────────────────────────────────────────────────┐
-│                  LangGraph Brain                     │
-│                                                     │
-│  [1] Ingest → [2] Rule Filter → [2.5] PDF Extract  │
-│       → [3] LLM Classify → [4] Decision Engine     │
-│       → [5] Draft Reply → [6] Store + Autopilot    │
-└─────────────────────────────────────────────────────┘
-        │
-        ▼
-  SQLite Database (inboxiq.db)
-        │
-        ▼
-  FastAPI Backend (port 8001)
-        │
-        ▼
-  React + Vite + Tailwind Frontend
-```
-
-### Tech Stack
-
-| Layer | Technology |
+| | |
 |---|---|
-| **Frontend** | React 19 + Vite + Tailwind CSS v4 + Lucide React |
-| **Backend** | FastAPI + SQLAlchemy + SQLite |
-| **AI Orchestration** | LangGraph (stateful agent graph) |
-| **Local AI** | Ollama (Llama 3) — runs on your machine |
-| **Cloud AI** | Google Gemini 2.0 Flash (optional fallback) |
-| **Gmail** | Google Gmail API v1 (OAuth 2.0) |
-| **PDF Parsing** | PyMuPDF |
+| **Sorts your inbox** | Reads new Gmail, filters obvious ads with rules, then a local AI model summarizes each email and scores how much it needs you. |
+| **Asks when unsure** | Anything the model is unsure about goes to a "Needs you" queue. It does not hide on a guess. |
+| **Suggests first** | By default it only logs what it would do (dry run). Your Gmail is not changed until you switch it on. |
+| **Undoes mistakes** | Every real action is logged after Gmail confirms it, and has an Undo button. |
+| **Drafts replies** | Say what you want ("say yes to Friday"). The model writes it. You edit and confirm before anything is sent. |
+| **Answers questions** | Ask your inbox things in plain language. |
+| **Reads PDFs** | Pulls key fields out of invoices, resumes, and contracts. |
 
 ---
 
-## Live demo
+## Why not just use Gmail's built-in AI?
 
-- **UI preview:** https://huggingface.co/spaces/Laukik007/inboxiq runs in your browser on 80 made-up emails. Their sorting was done by the real rules; the AI model is not part of the demo.
-- **Test the real filter:** https://huggingface.co/spaces/Laukik007/inboxiq#/try runs the unchanged `src/rules.py` in your browser (Pyodide). Paste any email and see the decision. Nothing is sent anywhere.
-- Rebuild it with `powershell -File scripts/make_space.ps1` (output: `hf-space/`).
+| | Gmail / Gemini features | InBoxIQ |
+|---|---|---|
+| Where the AI runs | Google's cloud | **Your laptop** (Ollama) |
+| Who reads your mail | Processed on Google's servers | Stays on your machine unless you add a cloud key |
+| Default behavior | Built-in features decide for you | **Suggests only**, you opt in to actions |
+| Mistakes | Not something you can inspect | **Logged and undoable** |
+| Rules | Closed | **Open source, readable, testable** |
+| Cost | Tied to Google's plans | Free to run locally |
+
+I am not claiming it is smarter than Google's models. The point is control, privacy, and being able to check its work.
+
+---
+
+## How it works
+
+```mermaid
+flowchart LR
+    G[Gmail API] --> R[1. Rules<br/>fast, deterministic]
+    R -->|obvious ad| H[Hide suggestion]
+    R -->|unclear| L[2. Local LLM<br/>summary + importance]
+    L --> D{3. Safety check}
+    D -->|sure it's noise| H
+    D -->|unsure or important| Q[Needs you queue]
+    H --> M{Mode}
+    M -->|assist default| LOG[Log only, dry run]
+    M -->|autonomous opt-in| ACT[Act in Gmail]
+    ACT --> AUD[Audit log] --> U[Undo]
+```
+
+Each new email goes through a LangGraph pipeline:
+
+1. **Ingest** the email, thread, and attachment info from Gmail.
+2. **Rules first.** Cheap, deterministic filters catch obvious promotions in milliseconds, so the model is not wasted on them.
+3. **Extract** structured data from PDF attachments.
+4. **Classify** with a local model: summary, category, importance, deadlines.
+5. **Decide.** A low importance score alone never hides mail. Unsure goes to review.
+6. **Store, then act or suggest** depending on the mode, with an audit entry for every action.
+
+### Design decisions that matter
+
+- **Rules before the model.** A cheap rule is faster and can be tested exactly. The model only sees what rules cannot decide.
+- **A guess never archives.** My first version let a low model score archive mail. That was the main cause of the 57.6%.
+- **Dry run by default.** Trust is earned. The user turns actions on.
+- **Evidence over opinion.** Rules tuned on synthetic data still failed on real mail (30% wrongly hidden). I only trusted the real-mail result. See [DECISIONS.md](DECISIONS.md), including the ideas I tested and rejected.
+
+---
+
 ## Results
 
-### Real mail (my own inbox, 50 emails, labelled by hand)
-Labels: 17 noise, 18 FYI, 15 needs-action. The emails and labels stay on my machine (gitignored). Reproduce on your own mail: `python -m eval.real export`, add labels, `python -m eval.real score`.
+### Real mail: my own inbox, 50 emails, labelled by hand
+Labels: 17 noise, 18 FYI, 15 needs-action. The emails and labels stay on my machine (gitignored).
 
 | System | Noise hidden | Precision | Important mail wrongly hidden | Needs-action mail hidden |
 |---|---|---|---|---|
 | Hide nothing (baseline) | 0% | n/a | 0% | 0% |
-| App as it originally ran (old rules + LLM) | 52.9% | 32.1% | **57.6%** | **66.7%** |
+| App as it originally ran | 52.9% | 32.1% | **57.6%** | **66.7%** |
 | Rules v2 (tuned on synthetic data) | 29.4% | 33.3% | 30.3% | 26.7% |
 | **Rules v3 (current)** | 17.6% | 100% | **0.0%** | **0.0%** |
 
-What this shows: the original app hid 2 of every 3 emails that needed action. Rules tuned on synthetic data still failed on real mail (30% false-archive), so I cut the rules to the one signal that was always right (promotional subjects). The rules now hide less noise; the rest is left for review instead of being hidden. 50 emails is a small sample: one wrong hide would be about 3 percentage points.
+The rules now hide less noise on purpose. The rest is left for you to review instead of being hidden. 50 emails is a small sample: one wrong hide would move the number by about 3 points.
 
-### Synthetic mailbox (150 labelled emails, seed 42, runs in CI)
-`python -m eval.make_dataset`, then `python -m eval.run_eval --name rules`.
+### Synthetic mailbox: 150 labelled emails, runs in CI
+This is a regression guard, not proof. I wrote it alongside the rules, so it overstates accuracy: v2 scored 0% wrongly hidden here and 30% on real mail.
 
-| System | Noise hidden | Precision | Important mail wrongly hidden |
-|---|---|---|---|
-| Original keyword rules | 88.3% | 63.9% | 33.3% |
-| Rules v3 (current) | 38.3% | 100% | 0.0% |
-| Llama 3 8B local, archive-if-low-importance | 96.7% | 65.2% | 34.4% |
+### Speed
+Measured on my own laptop CPU: rule-filtered mail finishes in milliseconds. Mail that goes to the model took a median of about 22.5 s with llama3 8B. `llama3.2:3b` was about 2x faster (median 10.5 s). Live numbers: `GET /api/metrics`.
 
-The synthetic set is a regression guard. Its labels are mine and I wrote it alongside the rules, so it over-states accuracy: v2 scored 0% false-archive here and 30% on real mail.
-**Latency** (measured from the 264 processed emails in my own database, `latency` column, Nov 2026): p50 **8 ms**, p95 **44 s** overall. Rule-filtered mail finishes in milliseconds; the 84 emails that went to the LLM had p50 **22.5 s**, p95 **90 s** on a laptop CPU. All 266 decisions were logged under the Gemini model name, so I cannot say which model served each one. **Cost:** \ with local Ollama; Gemini cost was not tracked. Live numbers: `GET /api/metrics`.
-
-## Try it without Gmail
-
-`python scripts/demo_server.py` then open http://127.0.0.1:8002. It loads 80 synthetic emails into a temp folder, never polls Gmail and never calls a model. The landing page is at `/` and the dashboard at `/#/app`.
-
-## Known limits
-- Login is a local token (`.inboxiq_token`), handed to the UI only on this machine. Fine for one user on one PC; not a multi-user login.
-- Undo exists for archives done by autopilot (`POST /api/autopilot/undo/{id}`). There is no undo button in the UI yet.
-- Synthetic test set only; no real-user results yet.
+### Known limits
+- Tested on one person's mail (mine). No multi-user results yet.
 - Prompt-injection behavior is not tested.
-- Docker path is untested; first-time Gmail OAuth needs a host browser.
-## 🚀 Quick Start
+- Login is a local token for one user on one PC. It is not a multi-user login.
+- The Docker image was built and run locally, not in a hosted environment.
 
-### Prerequisites
+---
 
-- Python 3.10+
-- Node.js 18+ and npm
-- [Ollama](https://ollama.ai) installed with Llama 3 pulled (`ollama pull llama3`)
-- A Google Cloud project with the Gmail API enabled
-- `gmail_credentials.json` downloaded from Google Cloud Console
+## Security
 
-### 1. Clone the Repository
+Local-first by design, and honest about the limits. Full table in [SECURITY.md](SECURITY.md).
+
+- Binds to `127.0.0.1`. CORS allowlist, Origin and Host checks, security headers and CSP, rate limits.
+- Local API token for the dashboard.
+- Gmail token stored in the OS credential vault (Windows Credential Manager, macOS Keychain) with a file fallback.
+- Confirm-before-send, bound to the specific thread.
+- Logs are redacted. Email bodies are erased after 30 days.
+- `pip-audit` and `npm audit` run in CI. Both reported no known vulnerabilities at last check.
+
+---
+
+## Try it
+
+**In your browser, no sign-up:** the [`#/try` page](https://huggingface.co/spaces/Laukik007/inboxiq#/try) runs the real `src/rules.py` in your browser through Pyodide. Paste an email and see the decision. Nothing leaves the page. (This demo does not include the AI model.)
+
+**Local demo with fake mail:** `python scripts/demo_server.py`, then open http://127.0.0.1:8002. It loads 80 synthetic emails and never contacts Gmail or a model.
+
+---
+
+## Quick start
+
+**You need:** Python 3.10+, Node 18+, [Ollama](https://ollama.ai) (`ollama pull llama3` or `llama3.2:3b`), and a Google Cloud project with the Gmail API enabled (`gmail_credentials.json`).
 
 ```bash
 git clone https://github.com/Laukikrathod2007/InBoxAI--Final.git
 cd InBoxAI--Final
-```
-
-### 2. Configure Environment
-
-Create a `.env` file in the project root:
-
-```env
-# Gmail API
-GMAIL_CLIENT_CONFIG=gmail_credentials.json
-GMAIL_TOKEN_FILE=token.json
-
-# AI Model (choose one or both)
-GEMINI_API_KEY=your_gemini_api_key_here   # Optional — leave blank for local-only
-PRIMARY_MODEL=gemini-2.0-flash
-FALLBACK_MODEL=gemini-flash-latest
-
-# Local Ollama (used first if available)
-OLLAMA_BASE_URL=http://localhost:11434
-OLLAMA_MODEL=llama3
-
-# App Settings
-POLLING_INTERVAL_SECONDS=20
-CONFIDENCE_THRESHOLD=70
-TEMPERATURE=0.2
-MAX_OUTPUT_TOKENS=512
-```
-
-Place your `gmail_credentials.json` in the project root.
-
-### 3. One-Click Launch (Windows)
-
-```powershell
-powershell -File setup_and_run.ps1
-```
-
-Or double-click **`Launch InBoxIQ.bat`**.
-
-### 4. Manual Launch
-
-```bash
-# Install Python dependencies
+cp .env.example .env            # keep AUTOPILOT_MODE=assist to start
 pip install -r requirements.txt
-
-# Build the frontend
-cd frontend
-npm install
-npm run build
-cd ..
-
-# Start the server
-python run_app.py
+cd frontend && npm install && npm run build && cd ..
+python scripts/gmail_login.py   # sign in through the browser
+python run_app.py               # opens http://127.0.0.1:8001
 ```
 
-### 5. Open the Dashboard
+Windows: double-click **`Launch InBoxIQ.bat`** or run `setup_and_run.ps1`.
 
-```
-Local:   http://localhost:8001
-Network: off by default. Set INBOXIQ_HOST=0.0.0.0 only on a trusted network (no login).
-```
+Google apps in testing mode expire tokens about weekly. Rerun `scripts/gmail_login.py` when that happens.
 
-On first launch, a browser window will open for Gmail OAuth authorization. After approving, `token.json` is saved and the worker starts polling automatically.
+### Modes
 
----
-
-## 📁 Project Structure
-
-```
-InBoxIQ/
-├── src/
-│   ├── main.py           — FastAPI app entry point, serves React SPA
-│   ├── api_routes.py     — All REST API endpoints (/api/*)
-│   ├── worker.py         — Background email polling loop (every N seconds)
-│   ├── brain.py          — LangGraph 6-stage AI pipeline
-│   ├── email_reader.py   — Gmail API: fetch, send, thread, labels
-│   ├── extractor.py      — PDF document intelligence (invoice, resume, etc.)
-│   ├── noise_filter.py   — LLM-powered spam/marketing detector
-│   ├── chat_engine.py    — NL → SQL → NL inbox Q&A engine
-│   ├── ghostwriter.py    — AI email drafting from intent
-│   ├── autopilot.py      — Gmail automation (archive, label, mark read)
-│   ├── llm_client.py     — Unified LLM client (Ollama → Gemini fallback)
-│   ├── database.py       — SQLAlchemy models + auto-migration
-│   ├── models.py         — Pydantic request/response models
-│   └── config.py         — Settings loaded from .env
-│
-├── frontend/
-│   ├── src/
-│   │   ├── App.jsx                    — Main 3-column Work OS layout
-│   │   ├── index.css                  — Tailwind v4 + Inter font
-│   │   └── components/
-│   │       ├── AskModal.jsx           — AI Q&A drawer
-│   │       ├── ComposeModal.jsx       — Intent → Draft → Send modal
-│   │       ├── EmailCard.jsx          — Email list item card
-│   │       ├── EmailList.jsx          — Scrollable email feed
-│   │       ├── RightPanel.jsx         — Intelligence panel + AI chat
-│   │       ├── SideBar.jsx            — Category navigation sidebar
-│   │       └── TopBar.jsx             — Search + navigation bar
-│   └── dist/                          — Built production assets (gitignored)
-│
-├── gmail_credentials.json  — Google OAuth client (gitignored, add your own)
-├── token.json              — Gmail session token (auto-generated, gitignored)
-├── inboxiq.db              — SQLite database (gitignored)
-├── requirements.txt        — Python dependencies
-├── run_app.py              — App launcher (server + browser open)
-├── setup_and_run.ps1       — Windows one-click setup script
-├── Launch InBoxIQ.bat      — Windows batch launcher
-└── .env                    — Configuration (gitignored, create your own)
-```
-
----
-
-## 📡 API Reference
-
-| Method | Endpoint | Description |
-|---|---|---|
-| `GET` | `/api/history` | Fetch processed emails (most recent first) |
-| `GET` | `/api/search?q=term` | Full-text search across subject, sender, summary, body |
-| `GET` | `/api/stats` | Dashboard counts (total, noise, needs reply, errors) |
-| `GET` | `/api/daily-briefing` | AI-generated executive summary of open action items |
-| `GET` | `/api/action-items` | Fetch open work items (reply, task, invoice, resume, schedule) |
-| `GET` | `/api/threads` | Fetch email thread summaries |
-| `GET` | `/api/document-extractions` | PDF extraction results |
-| `GET` | `/api/extraction-stats` | Document extraction performance stats |
-| `GET` | `/api/review-queue` | Low-confidence emails needing human review |
-| `GET` | `/api/emails-by-category` | Emails grouped by noise category (LinkedIn, Naukri, etc.) |
-| `GET` | `/api/user-profile` | Gmail account info |
-| `GET` | `/api/settings` | Current confidence threshold and autopilot settings |
-| `POST` | `/api/chat` | Ask a natural language question about your inbox |
-| `POST` | `/api/compose-draft` | Generate an email draft from intent + tone |
-| `POST` | `/api/send` | Send an email via Gmail API |
-| `POST` | `/api/overrides` | Manually override priority / noise / done status |
-| `POST` | `/api/bulk-action` | Archive or mute an entire email category |
-| `POST` | `/api/action-items/{id}/status` | Update action item status |
-| `POST` | `/api/settings` | Update confidence threshold |
-| `GET` | `/automation/status` | Worker loop runtime status |
-| `POST` | `/automation/start` | Start the background worker |
-| `POST` | `/automation/stop` | Stop the background worker |
-| `POST` | `/process-now` | Manually trigger one email processing cycle |
-| `GET` | `/health` | Health check |
-
----
-
-## ⚙️ Configuration
-
-All settings are controlled via `.env`:
-
-| Variable | Default | Description |
-|---|---|---|
-| `GEMINI_API_KEY` | _(empty)_ | Google Gemini API key. Leave blank for local-only mode. |
-| `PRIMARY_MODEL` | `gemini-2.0-flash` | Primary Gemini model |
-| `FALLBACK_MODEL` | `gemini-flash-latest` | Fallback Gemini model |
-| `OLLAMA_BASE_URL` | `http://localhost:11434` | Ollama server URL |
-| `OLLAMA_MODEL` | `llama3` | Local model name |
-| `POLLING_INTERVAL_SECONDS` | `20` | How often to check Gmail |
-| `CONFIDENCE_THRESHOLD` | `70` | Below this %, email goes to review queue |
-| `TEMPERATURE` | `0.2` | LLM temperature (lower = more deterministic) |
-| `AUTOPILOT_ENABLED` | `true` | Enable/disable autopilot actions |
-| `AUTOPILOT_MODE` | `autonomous` | `off` / `assist` / `autonomous` |
-| `AUTOPILOT_AUTO_ARCHIVE_NOISE` | `true` | Auto-archive spam/marketing |
-| `AUTOPILOT_AUTO_SEND_REPLIES` | `false` | Auto-send AI replies (disabled by default) |
-
----
-
-## 🧠 How the AI Pipeline Works
-
-Each new email goes through a 6-stage LangGraph pipeline:
-
-1. **Ingest** — Fetches full email content, thread history, and attachment metadata from Gmail API
-2. **Rule Filter** — Deterministic pre-bucketing (marketing keywords, no-reply senders, etc.) — skips LLM for obvious noise
-3. **PDF Extract** — Downloads and intelligently extracts structured data from PDF attachments (invoices, resumes, contracts, receipts)
-4. **LLM Classify** — Sends cleaned content + document context to LLM for structured JSON extraction: category, priority, actions required, deadlines, people, organizations
-5. **Decision Engine** — Multi-factor scoring: confidence × importance × thread history → routes to TASK / REPLY / SCHEDULE / ARCHIVE / REVIEW
-6. **Store + Autopilot** — Saves to SQLite, creates ActionItems for the UI, then applies Gmail-side actions (labels, archive, mark read) based on autopilot config
-
----
-
-## 🔒 Privacy & Security
-
-- **Local-first**: With no `GEMINI_API_KEY`, email text stays on your machine. If a key is set and Ollama is down, prompts containing email text go to Google Gemini.
-- **Secrets gitignored**: `.env`, `gmail_credentials.json`, `token.json`, and `inboxiq.db` are all excluded from version control.
-- **Safe by default**: `AUTOPILOT_MODE=assist` never changes Gmail; it logs what it would do. Auto-send is off. Server binds to 127.0.0.1, with cross-origin write blocking and Host checks. There is no login yet.
-- **OAuth 2.0**: Gmail access uses Google's standard OAuth flow with `gmail.modify` scope.
-
----
-
-## 🔮 Roadmap
-
-| Feature | Status |
+| `AUTOPILOT_MODE` | What happens |
 |---|---|
-| Google Calendar integration for meeting scheduling | Planned |
-| Multi-account Gmail support | Planned |
-| Model fine-tuning using UserFeedback table | Planned |
-| Desktop notifications for high-priority emails | Planned |
-| Switch to `google.genai` SDK (deprecation fix) | Pending |
+| `off` | Nothing is done. |
+| `assist` (default) | Logs what it would do. Gmail is not changed. |
+| `autonomous` | Acts in Gmail, logs every action, supports Undo. Try it on a spare account first. |
 
 ---
 
-## 🐛 Known Issues
+## Tech stack
 
-- `google.generativeai` package shows a deprecation warning — still functional, migration to `google.genai` is planned
-- Gmail OAuth token expires periodically — re-run the app to trigger a fresh OAuth flow
+| Layer | Technology |
+|---|---|
+| Frontend | React 19, Vite, Tailwind CSS v4 |
+| Backend | FastAPI, SQLAlchemy, SQLite |
+| AI workflow | LangGraph |
+| Local model | Ollama (llama3, llama3.2:3b) |
+| Gmail | Gmail API v1, OAuth 2.0 |
+| PDFs | PyMuPDF |
+| Quality | pytest (63 tests), ESLint, GitHub Actions, pip-audit, npm audit |
 
 ---
 
-## 📄 License
+## Repo map
 
-MIT License — see [LICENSE](LICENSE) for details.
+```
+src/        FastAPI app, LangGraph brain, rules, autopilot, security modules
+frontend/   React app, landing page, in-browser demo
+eval/       Evaluation harness: synthetic set and real-mail scoring
+tests/      Unit and API tests
+docs/       Video script, write-up draft
+```
+
+Further reading: [ARCHITECTURE.md](ARCHITECTURE.md) · [DECISIONS.md](DECISIONS.md) · [RISKS.md](RISKS.md) · [RUNBOOK.md](RUNBOOK.md) · [SECURITY.md](SECURITY.md)
+
+---
+
+## Roadmap
+
+- Weeks of real use, then measure the sender-memory feature (it learns noise senders after 2 mutes).
+- Evaluate on more than one person's mail.
+- Prompt-injection tests.
+- Google Calendar integration and multi-account support.
 
 ---
 
 <div align="center">
-Built with FastAPI, React, LangGraph, and local LLMs.<br/>
-<strong>Local-first. Measured. Reversible by default.</strong>
+
+MIT License · Designed and built by [Laukik Rathod](https://github.com/Laukikrathod2007) · FastAPI, React, LangGraph, and local models.
+
+**Local-first. Measured. Reversible by default.**
+
 </div>
