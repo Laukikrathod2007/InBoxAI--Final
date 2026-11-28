@@ -1,8 +1,8 @@
 ﻿<div align="center">
 
-<img src="frontend/public/logo.png" alt="InBoxIQ" width="84" />
+<img src="frontend/public/logo.svg" alt="InBoxIQ" width="300" />
 
-# InBoxIQ
+&nbsp;
 
 ### The Gmail assistant that asks before it acts.
 

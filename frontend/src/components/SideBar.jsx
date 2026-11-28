@@ -6,14 +6,14 @@ export function BrandLogo({ className = '' }) {
       <svg viewBox="0 0 100 100" className="h-7 w-7" aria-hidden="true">
         <defs>
           <linearGradient id="iq-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#7c3aed" />
-            <stop offset="100%" stopColor="#2563eb" />
+            <stop offset="0%" stopColor="#6366f1" />
+            <stop offset="100%" stopColor="#4f46e5" />
           </linearGradient>
         </defs>
         <path d="M 50,0 C 50,35 65,50 100,50 C 65,50 50,65 50,100 C 50,65 35,50 0,50 C 35,50 50,35 50,0 Z" fill="url(#iq-grad)" />
       </svg>
       <span className="text-[17px] font-bold tracking-tight text-slate-900">
-        InBox<span className="text-violet-600">IQ</span>
+        InBox<span className="text-purple-600">IQ</span>
       </span>
     </span>
   );

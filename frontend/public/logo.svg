@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 380 100" width="380" height="100" role="img" aria-label="InBoxIQ">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#6366f1"/>
+      <stop offset="1" stop-color="#4f46e5"/>
+    </linearGradient>
+  </defs>
+  <path fill="url(#g)" d="M50 2C54 34 66 46 98 50C66 54 54 66 50 98C46 66 34 54 2 50C34 46 46 34 50 2Z"/>
+  <text x="116" y="70" font-family="Inter, 'Segoe UI', Arial, Helvetica, sans-serif" font-size="62" font-weight="800" letter-spacing="-2"><tspan fill="#0f172a">InBox</tspan><tspan fill="#9333ea">IQ</tspan></text>
+</svg>
